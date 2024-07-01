@@ -65,6 +65,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         wsl sudo apt-get install -y skopeo
+        wsl skopeo --version
 
     - name: OpenShift Client Installer
       uses: redhat-actions/oc-installer@v1
