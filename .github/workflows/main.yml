@@ -111,6 +111,10 @@ jobs:
         cd sigstore-ocp
         oc apply --kustomize=keycloak/resources/base
 
+    - name: Export OIDC_ISSUER_URL
+      run: |
+        export OIDC_ISSUER_URL=https://$(oc get route keycloak -n keycloak-system | tail -n 1 | awk '{print $2}')/auth/realms/trusted-artifact-signer
+        echo "OIDC_ISSUER_URL=${OIDC_ISSUER_URL}" >> $GITHUB_ENV
 
     - name: Create and apply rhtas-candidate.yaml
       run: |
@@ -130,10 +134,17 @@ jobs:
         EOF
         oc apply -f rhtas-candidate.yaml
 
-    - name: Export OIDC_ISSUER_URL
+    - name: Wait for rhtas-operator to be ready
       run: |
-        export OIDC_ISSUER_URL=https://$(oc get route keycloak -n keycloak-system | tail -n 1 | awk '{print $2}')/auth/realms/trusted-artifact-signer
-        echo "OIDC_ISSUER_URL=${OIDC_ISSUER_URL}" >> $GITHUB_ENV
+        for i in {1..30}; do
+          if oc get csv -n openshift-operators | grep 'rhtas-operator' | grep 'Succeeded'; then
+            echo "rhtas-operator is ready."
+            break
+          else
+            echo "Waiting for rhtas-operator to be ready..."
+            sleep 10  # Wait for 10 seconds before checking again
+          fi
+        done
 
     - name: Create and apply securesign.yaml
       run: |
