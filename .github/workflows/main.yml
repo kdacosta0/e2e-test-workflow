@@ -82,6 +82,7 @@ jobs:
         oc apply --kustomize=keycloak/operator/base
 
     - name: Wait for Keycloak system pods to be running
+      if: matrix.os != 'windows-latest'
       run: |
         for i in {1..30}; do
           if oc get pods -n keycloak-system | grep -E 'Running|Completed'; then
@@ -99,6 +100,7 @@ jobs:
         oc apply --kustomize=keycloak/resources/base
 
     - name: Wait for Keycloak route to be available
+      if: matrix.os != 'windows-latest'
       run: |
         for i in {1..30}; do
           KEYCLOAK_URL=$(oc get route keycloak -n keycloak-system -o jsonpath='{.status.ingress[0].host}' 2>/dev/null || echo "")
@@ -114,6 +116,7 @@ jobs:
         done
 
     - name: Create and apply rhtas-candidate.yaml
+      if: matrix.os != 'windows-latest'
       run: |
         cat <<EOF > rhtas-candidate.yaml
         ---
@@ -133,6 +136,7 @@ jobs:
         oc apply -f rhtas-candidate.yaml
 
     - name: Wait for rhtas-operator to be ready
+      if: matrix.os != 'windows-latest'
       run: |
         for i in {1..30}; do
           if oc get csv -n openshift-operators | grep 'rhtas-operator' | grep 'Succeeded'; then
@@ -145,6 +149,7 @@ jobs:
         done
 
     - name: Create and apply securesign.yaml
+      if: matrix.os != 'windows-latest'
       run: |
         cat <<EOF > securesign.yaml
         kind: Securesign
@@ -195,6 +200,7 @@ jobs:
         oc apply -f securesign.yaml
 
     - name: Wait for Rekor URL to be available
+      if: matrix.os != 'windows-latest'
       run: |
         for i in {1..30}; do
           REKOR_URL=$(oc get rekor -o jsonpath='{.items[0].status.url}' -n trusted-artifact-signer 2>/dev/null || echo "")
