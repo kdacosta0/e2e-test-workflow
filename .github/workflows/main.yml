@@ -90,7 +90,7 @@ jobs:
           else
             echo "Waiting for Keycloak system pods to be running..."
             sleep 10  # Wait for 10 seconds before checking again
-        fi
+          fi
         done
 
     - name: Apply Keycloak resources base Kustomize directory
