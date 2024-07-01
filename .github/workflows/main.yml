@@ -54,18 +54,17 @@ jobs:
       if: matrix.os == 'macos-latest'
       run: brew install skopeo
 
-    - name: Install WSL and skopeo (Windows)
+    - name: Setup WSL (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: Vampire/setup-wsl@v3
+      with:
+        distribution: Ubuntu-22.04
+        update: 'true'
+
+    - name: Install skopeo in WSL (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        # Enable WSL
-        dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-        # Enable Virtual Machine Platform
-        dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-        # Install WSL
-        wsl --install
-        # Update and install skopeo in WSL
-        wsl -u root apt-get update
-        wsl -u root apt-get install -y skopeo
+        wsl sudo apt-get install -y skopeo
 
     - name: OpenShift Client Installer
       uses: redhat-actions/oc-installer@v1
@@ -94,6 +93,25 @@ jobs:
         cd sigstore-ocp
         oc apply --kustomize=keycloak/operator/base
 
+    - name: Create and apply rhtas-candidate.yaml
+      run: |
+        cat <<EOF > rhtas-candidate.yaml
+        ---
+        apiVersion: operators.coreos.com/v1alpha1
+        kind: Subscription
+        metadata:
+          name: rhtas-operator
+          namespace: openshift-operators
+        spec:
+          channel: candidate-v1.0
+          installPlanApproval: Automatic
+          name: rhtas-operator
+          source: redhat-operators
+          sourceNamespace: openshift-marketplace
+        EOF
+
+        oc apply -f rhtas-candidate.yaml
+
     - name: Wait for Keycloak system pods to be running
       run: |
         for i in {1..30}; do
@@ -115,25 +133,6 @@ jobs:
       run: |
         export OIDC_ISSUER_URL=https://$(oc get route keycloak -n keycloak-system | tail -n 1 | awk '{print $2}')/auth/realms/trusted-artifact-signer
         echo "OIDC_ISSUER_URL=${OIDC_ISSUER_URL}" >> $GITHUB_ENV
-
-    - name: Create and apply rhtas-candidate.yaml
-      run: |
-        cat <<EOF > rhtas-candidate.yaml
-        ---
-        apiVersion: operators.coreos.com/v1alpha1
-        kind: Subscription
-        metadata:
-          name: rhtas-operator
-          namespace: openshift-operators
-        spec:
-          channel: candidate-v1.0
-          installPlanApproval: Automatic
-          name: rhtas-operator
-          source: redhat-operators
-          sourceNamespace: openshift-marketplace
-        EOF
-
-        oc apply -f rhtas-candidate.yaml
 
     - name: Wait for rhtas-operator to be ready
       run: |
