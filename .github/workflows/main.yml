@@ -132,7 +132,7 @@ jobs:
           source: redhat-operators
           sourceNamespace: openshift-marketplace
         EOF
-        
+
         oc apply -f rhtas-candidate.yaml
 
     - name: Wait for rhtas-operator to be ready
@@ -165,15 +165,15 @@ jobs:
           ctlog: null
           fulcio:
             certificate:
-            commonName: fulcio.hostname
-            organizationEmail: jdoe@redhat.com
-            organizationName: Red Hat
+              commonName: fulcio.hostname
+              organizationEmail: jdoe@redhat.com
+              organizationName: Red Hat
             config:
-            OIDCIssuers:
-            - ClientID: trusted-artifact-signer
-              Issuer: ${OIDC_ISSUER_URL}
-              IssuerURL: ${OIDC_ISSUER_URL}
-              Type: email
+              OIDCIssuers:
+                - ClientID: trusted-artifact-signer
+                Issuer: ${OIDC_ISSUER_URL}
+                IssuerURL: ${OIDC_ISSUER_URL}
+                Type: email
             externalAccess:
               enabled: true
             monitoring:
