@@ -197,14 +197,15 @@ jobs:
 
         oc apply -f securesign.yaml
 
-    - name: Wait for securesign pods to be ready
+    - name: Wait for Rekor URL to be available
       run: |
         for i in {1..30}; do
-        if oc get jobs -A | grep 'Completed'; then
-            echo "Securesign pods are ready."
+        REKOR_URL=$(oc get rekor -o jsonpath='{.items[0].status.url}' -n trusted-artifact-signer 2>/dev/null)
+        if [ -n "$REKOR_URL" ]; then
+            echo "Rekor URL is available: $REKOR_URL"
             break
         else
-            echo "Waiting for securesign pods to be ready..."
+            echo "Waiting for Rekor URL to be available..."
             sleep 10  # Wait for 10 seconds before checking again
         fi
         done
