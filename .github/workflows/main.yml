@@ -65,8 +65,8 @@ jobs:
     - name: Install skopeo in WSL (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        wsl sudo apt-get install -y skopeo
-        wsl skopeo --version
+        wsl.exe sudo apt-get install -y skopeo
+        wsl.exe skopeo --version
 
     - name: OpenShift Client Installer
       uses: redhat-actions/oc-installer@v1
@@ -134,7 +134,7 @@ jobs:
           source: redhat-operators
           sourceNamespace: openshift-marketplace
         EOF
-  
+
         oc apply -f rhtas-candidate.yaml
 
     - name: Wait for rhtas-operator to be ready
@@ -232,7 +232,6 @@ jobs:
       run: |
         cd sigstore-e2e
         git checkout skopeo-support
-        wsl --version
         $env:CLI_STRATEGY = "openshift"
         .\tas-env-variables.ps1
         go test -v ./test/... --ginkgo.v
