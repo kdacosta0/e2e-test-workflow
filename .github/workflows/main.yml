@@ -201,8 +201,9 @@ jobs:
       run: |
         for i in {1..30}; do
         REKOR_URL=$(oc get rekor -o jsonpath='{.items[0].status.url}' -n trusted-artifact-signer 2>/dev/null)
-        if [ -n "$REKOR_URL" ]; then
+        if [[ -n "$REKOR_URL" && "$REKOR_URL" == *"https://rekor-server-trusted-artifact-signer"* ]]; then
             echo "Rekor URL is available: $REKOR_URL"
+            echo "REKOR_URL=${REKOR_URL}" >> $GITHUB_ENV
             break
         else
             echo "Waiting for Rekor URL to be available..."
