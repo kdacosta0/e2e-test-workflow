@@ -119,16 +119,15 @@ jobs:
         apiVersion: operators.coreos.com/v1alpha1
         kind: Subscription
         metadata:
-        name: rhtas-operator
-        namespace: openshift-operators
+          name: rhtas-operator
+          namespace: openshift-operators
         spec:
-        channel: candidate-v1.0
-        installPlanApproval: Automatic
-        name: rhtas-operator
-        source: redhat-operators
-        sourceNamespace: openshift-marketplace
+          channel: candidate-v1.0
+          installPlanApproval: Automatic
+          name: rhtas-operator
+          source: redhat-operators
+          sourceNamespace: openshift-marketplace
         EOF
-        oc apply -f rhtas-candidate.yaml
 
     - name: Export OIDC_ISSUER_URL
       run: |
@@ -142,45 +141,45 @@ jobs:
         apiVersion: rhtas.redhat.com/v1alpha1
         metadata:
         annotations:
-            rhtas.redhat.com/metrics: 'true'
+          rhtas.redhat.com/metrics: 'true'
         labels:
-            app.kubernetes.io/instance: securesign-sample
-            app.kubernetes.io/name: securesign-sample
-            app.kubernetes.io/part-of: trusted-artifact-signer
+          app.kubernetes.io/instance: securesign-sample
+          app.kubernetes.io/name: securesign-sample
+          app.kubernetes.io/part-of: trusted-artifact-signer
         name: securesign-sample
         namespace: trusted-artifact-signer
         spec:
         ctlog: null
         fulcio:
-            certificate:
-            commonName: fulcio.hostname
-            organizationEmail: jdoe@redhat.com
-            organizationName: Red Hat
-            config:
-            OIDCIssuers:
-                - ClientID: trusted-artifact-signer
-                Issuer: ${OIDC_ISSUER_URL}
-                IssuerURL: ${OIDC_ISSUER_URL}
-                Type: email
-            externalAccess:
-            enabled: true
-            monitoring:
-            enabled: true
+          certificate:
+          commonName: fulcio.hostname
+          organizationEmail: jdoe@redhat.com
+          organizationName: Red Hat
+          config:
+          OIDCIssuers:
+            - ClientID: trusted-artifact-signer
+            Issuer: ${OIDC_ISSUER_URL}
+            IssuerURL: ${OIDC_ISSUER_URL}
+            Type: email
+          externalAccess:
+          enabled: true
+          monitoring:
+          enabled: true
         rekor:
-            externalAccess:
-            enabled: true
-            monitoring:
-            enabled: true
+          externalAccess:
+          enabled: true
+          monitoring:
+          enabled: true
         trillian:
-            database:
-            create: true
+          database:
+          create: true
         tuf:
-            externalAccess:
-            enabled: true
-            keys:
-            - name: rekor.pub
-            - name: ctfe.pub
-            - name: fulcio_v1.crt.pem
+          externalAccess:
+          enabled: true
+          keys:
+          - name: rekor.pub
+          - name: ctfe.pub
+          - name: fulcio_v1.crt.pem
         EOF
         oc apply -f securesign.yaml
 
