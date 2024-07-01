@@ -74,10 +74,9 @@ jobs:
         wsl -u root apt-get update
         wsl -u root apt-get install -y skopeo
 
-    - name: Install oc
+    - name: OpenShift Client Installer
       uses: redhat-actions/oc-installer@v1
-      with:
-        oc_version: '4.15'
+            
 
     # FORNOW: Display tool versions
     - name: Display tool versions
