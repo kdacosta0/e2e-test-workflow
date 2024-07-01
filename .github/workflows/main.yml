@@ -84,10 +84,10 @@ jobs:
     - name: Wait for Keycloak system pods to be running
       run: |
         for i in {1..30}; do
-        if oc get pods -n keycloak-system | grep -E 'Running|Completed'; then
+          if oc get pods -n keycloak-system | grep -E 'Running|Completed'; then
             echo "Keycloak system pods are running."
             break
-        else
+          else
             echo "Waiting for Keycloak system pods to be running..."
             sleep 10  # Wait for 10 seconds before checking again
         fi
