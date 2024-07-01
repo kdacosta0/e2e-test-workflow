@@ -197,7 +197,7 @@ jobs:
     - name: Wait for Rekor URL to be available
       run: |
         for i in {1..30}; do
-          REKOR_URL=$(oc get rekor -o jsonpath='{.items[0].status.url}' -n trusted-artifact-signer)
+          REKOR_URL=$(oc get rekor -o jsonpath='{.items[0].status.url}' -n trusted-artifact-signer 2>/dev/null || echo "")
           if [[ -n "$REKOR_URL" && "$REKOR_URL" == *"rekor-server-trusted-artifact-signer"* ]]; then
             echo "Rekor URL is available: $REKOR_URL"
             break
