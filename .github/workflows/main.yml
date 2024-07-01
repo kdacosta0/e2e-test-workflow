@@ -24,12 +24,13 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
+    - name: Setup Go environment
+      uses: actions/setup-go@v5
       with:
-        go-version: '1.17'
+        go-version: '>=1.22.0'
+  
 
     - name: Install Git (Ubuntu/RHEL)
       if: matrix.os == 'ubuntu-latest'
