@@ -70,18 +70,6 @@ jobs:
       uses: redhat-actions/oc-installer@v1
             
 
-    # FORNOW: Display tool versions
-    - name: Display tool versions
-      run: |
-        go version
-        git --version
-        oc version
-        if [ "${{ matrix.os }}" != "windows-latest" ]; then
-        skopeo --version
-        else
-        wsl skopeo --version
-        fi
-
     - name: Log in to cluster
       run: oc login --token=${{ env.CLUSTER_TOKEN }} --server=${{ env.CLUSTER_URL }} --insecure-skip-tls-verify=true
 
