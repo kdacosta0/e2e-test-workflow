@@ -200,14 +200,14 @@ jobs:
     - name: Wait for Rekor URL to be available
       run: |
         for i in {1..30}; do
-        REKOR_URL=$(oc get rekor -o jsonpath='{.items[0].status.url}' -n trusted-artifact-signer)
-        if [[ -n "$REKOR_URL" && "$REKOR_URL" == *"https://rekor-server-trusted-artifact-signer"* ]]; then
+          REKOR_URL=$(oc get rekor -o jsonpath='{.items[0].status.url}' -n trusted-artifact-signer)
+          if [[ -n "$REKOR_URL" && "$REKOR_URL" == *"https://rekor-server-trusted-artifact-signer"* ]]; then
             echo "Rekor URL is available: $REKOR_URL"
             break
-        else
+          else
             echo "Waiting for Rekor URL to be available..."
             sleep 10  # Wait for 10 seconds before checking again
-        fi
+          fi
         done
 
     - name: Clone E2E repository
