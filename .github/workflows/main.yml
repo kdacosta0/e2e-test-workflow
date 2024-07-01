@@ -92,6 +92,7 @@ jobs:
       run: |
         cd sigstore-ocp
         oc apply --kustomize=keycloak/operator/base
+        sleep 10  # Wait for 10 seconds after applying the resources
 
     - name: Wait for Keycloak system pods to be running
       run: |
@@ -109,11 +110,12 @@ jobs:
       run: |
         cd sigstore-ocp
         oc apply --kustomize=keycloak/resources/base
+        sleep 10  # Wait for 10 seconds after applying the resources
 
     - name: Wait for Keycloak route to be available
       run: |
         for i in {1..30}; do
-          KEYCLOAK_URL=$(oc get route keycloak -n keycloak-system -o jsonpath='{.status.ingress[0].host}' 2>/dev/null)
+          KEYCLOAK_URL=$(oc get route keycloak -n keycloak-system -o jsonpath='{.status.ingress[0].host}' 2>/dev/null || echo "")
           if [[ -n "$KEYCLOAK_URL" && "$KEYCLOAK_URL" == *"keycloak-keycloak-system"* ]]; then
             OIDC_ISSUER_URL="https://${KEYCLOAK_URL}/auth/realms/trusted-artifact-signer"
             echo "Keycloak URL is available: $OIDC_ISSUER_URL"
@@ -142,7 +144,8 @@ jobs:
           sourceNamespace: openshift-marketplace
         EOF
   
-          oc apply -f rhtas-candidate.yaml
+        oc apply -f rhtas-candidate.yaml
+        sleep 10  # Wait for 10 seconds after applying the resources
 
     - name: Wait for rhtas-operator to be ready
       run: |
@@ -205,6 +208,7 @@ jobs:
         EOF
 
         oc apply -f securesign.yaml
+        sleep 10  # Wait for 10 seconds after applying the resources
 
     - name: Wait for Rekor URL to be available
       run: |
