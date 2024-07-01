@@ -94,6 +94,18 @@ jobs:
         cd sigstore-ocp
         oc apply --kustomize=keycloak/operator/base
 
+    - name: Wait for Keycloak system pods to be running
+      run: |
+        for i in {1..30}; do
+        if oc get pods -n keycloak-system | grep -E 'Running|Completed'; then
+            echo "Keycloak system pods are running."
+            break
+        else
+            echo "Waiting for Keycloak system pods to be running..."
+            sleep 10  # Wait for 10 seconds before checking again
+        fi
+        done
+
     - name: Apply Keycloak resources base Kustomize directory
       run: |
         cd sigstore-ocp
@@ -171,6 +183,18 @@ jobs:
             - name: fulcio_v1.crt.pem
         EOF
         oc apply -f securesign.yaml
+
+    - name: Wait for securesign pods to be ready
+      run: |
+        for i in {1..30}; do
+        if oc get jobs -A | grep 'Completed'; then
+            echo "Securesign pods are ready."
+            break
+        else
+            echo "Waiting for securesign pods to be ready..."
+            sleep 10  # Wait for 10 seconds before checking again
+        fi
+        done
 
     - name: Clone E2E repository
       run: git clone https://github.com/securesign/sigstore-e2e.git
