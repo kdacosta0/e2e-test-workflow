@@ -2,10 +2,6 @@ name: Multi-OS E2E Tests
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 env:
   CLUSTER_URL: ${{ secrets.CLUSTER_URL }}
@@ -89,6 +85,92 @@ jobs:
 
     - name: Log in to cluster
       run: oc login --token=${{ env.CLUSTER_TOKEN }} --server=${{ env.CLUSTER_URL }} --insecure-skip-tls-verify=true
+
+    - name: Clone repository for SSO operator
+      run: git clone https://github.com/securesign/sigstore-ocp.git
+
+    - name: Apply Keycloak base Kustomize directory
+      run: |
+        cd sigstore-ocp
+        oc apply --kustomize=keycloak/operator/base
+
+    - name: Apply Keycloak resources base Kustomize directory
+      run: |
+        cd sigstore-ocp
+        oc apply --kustomize=keycloak/resources/base
+
+
+    - name: Create and apply rhtas-candidate.yaml
+      run: |
+        cat <<EOF > rhtas-candidate.yaml
+        ---
+        apiVersion: operators.coreos.com/v1alpha1
+        kind: Subscription
+        metadata:
+        name: rhtas-operator
+        namespace: openshift-operators
+        spec:
+        channel: candidate-v1.0
+        installPlanApproval: Automatic
+        name: rhtas-operator
+        source: redhat-operators
+        sourceNamespace: openshift-marketplace
+        EOF
+        oc apply -f rhtas-candidate.yaml
+
+    - name: Export OIDC_ISSUER_URL
+      run: |
+        export OIDC_ISSUER_URL=https://$(oc get route keycloak -n keycloak-system | tail -n 1 | awk '{print $2}')/auth/realms/trusted-artifact-signer
+        echo "OIDC_ISSUER_URL=${OIDC_ISSUER_URL}" >> $GITHUB_ENV
+
+    - name: Create and apply securesign.yaml
+      run: |
+        cat <<EOF > securesign.yaml
+        kind: Securesign
+        apiVersion: rhtas.redhat.com/v1alpha1
+        metadata:
+        annotations:
+            rhtas.redhat.com/metrics: 'true'
+        labels:
+            app.kubernetes.io/instance: securesign-sample
+            app.kubernetes.io/name: securesign-sample
+            app.kubernetes.io/part-of: trusted-artifact-signer
+        name: securesign-sample
+        namespace: trusted-artifact-signer
+        spec:
+        ctlog: null
+        fulcio:
+            certificate:
+            commonName: fulcio.hostname
+            organizationEmail: jdoe@redhat.com
+            organizationName: Red Hat
+            config:
+            OIDCIssuers:
+                - ClientID: trusted-artifact-signer
+                Issuer: ${OIDC_ISSUER_URL}
+                IssuerURL: ${OIDC_ISSUER_URL}
+                Type: email
+            externalAccess:
+            enabled: true
+            monitoring:
+            enabled: true
+        rekor:
+            externalAccess:
+            enabled: true
+            monitoring:
+            enabled: true
+        trillian:
+            database:
+            create: true
+        tuf:
+            externalAccess:
+            enabled: true
+            keys:
+            - name: rekor.pub
+            - name: ctfe.pub
+            - name: fulcio_v1.crt.pem
+        EOF
+        oc apply -f securesign.yaml
 
     - name: Clone E2E repository
       run: git clone https://github.com/securesign/sigstore-e2e.git
