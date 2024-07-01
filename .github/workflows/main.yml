@@ -91,7 +91,7 @@ jobs:
         fi
 
     - name: Log in to cluster
-      run: oc login --token=${{ env.CLUSTER_TOKEN }} --server=${{ env.CLUSTER_URL }}
+      run: oc login --token=${{ env.CLUSTER_TOKEN }} --server=${{ env.CLUSTER_URL }} --insecure-skip-tls-verify=true
 
     - name: Clone E2E repository
       run: git clone https://github.com/securesign/sigstore-e2e.git
