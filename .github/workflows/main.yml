@@ -92,7 +92,6 @@ jobs:
       run: |
         cd sigstore-ocp
         oc apply --kustomize=keycloak/operator/base
-        sleep 10  # Wait for 10 seconds after applying the resources
 
     - name: Wait for Keycloak system pods to be running
       run: |
@@ -110,7 +109,6 @@ jobs:
       run: |
         cd sigstore-ocp
         oc apply --kustomize=keycloak/resources/base
-        sleep 10  # Wait for 10 seconds after applying the resources
 
     - name: Wait for Keycloak route to be available
       run: |
@@ -145,7 +143,6 @@ jobs:
         EOF
   
         oc apply -f rhtas-candidate.yaml
-        sleep 10  # Wait for 10 seconds after applying the resources
 
     - name: Wait for rhtas-operator to be ready
       run: |
@@ -208,7 +205,6 @@ jobs:
         EOF
 
         oc apply -f securesign.yaml
-        sleep 10  # Wait for 10 seconds after applying the resources
 
     - name: Wait for Rekor URL to be available
       run: |
