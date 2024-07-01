@@ -157,7 +157,7 @@ jobs:
           organizationName: Red Hat
           config:
           OIDCIssuers:
-            - ClientID: trusted-artifact-signer
+          - ClientID: trusted-artifact-signer
             Issuer: ${OIDC_ISSUER_URL}
             IssuerURL: ${OIDC_ISSUER_URL}
             Type: email
