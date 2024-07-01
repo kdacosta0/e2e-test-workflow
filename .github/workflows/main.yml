@@ -233,7 +233,7 @@ jobs:
         cd sigstore-e2e
         git checkout skopeo-support
         wsl.exe --version
-        wls.exe skopeo --version
+        wsl.exe skopeo --version
         $env:CLI_STRATEGY = "openshift"
         .\tas-env-variables.ps1
         go test -v ./test/... --ginkgo.v
