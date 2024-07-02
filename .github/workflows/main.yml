@@ -8,15 +8,67 @@ env:
   CLUSTER_TOKEN: ${{ secrets.CLUSTER_TOKEN }}
 
 jobs:
+  install-tools:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    name: Install Tools on ${{ matrix.os }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Go environment
+      uses: actions/setup-go@v5
+      with:
+        go-version: '>=1.22.0'
+
+    - name: OpenShift Client Installer
+      uses: redhat-actions/oc-installer@v1
+
+    - name: Install Git (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git
+
+    - name: Install Git (macOS)
+      if: matrix.os == 'macos-latest'
+      run: brew install git
+
+    - name: Install Git (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install git
+        echo "$env:ChocolateyInstall\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Install skopeo (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get install -y skopeo
+
+    - name: Install skopeo (macOS)
+      if: matrix.os == 'macos-latest'
+      run: brew install skopeo
+
+    - name: Install WSL and skopeo (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: Vampire/setup-wsl@v3
+      with:
+        distribution: Ubuntu-22.04
+        update: 'true'
+
+    - name: Install skopeo in WSL (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        wsl sudo apt-get install -y skopeo
+        wsl skopeo --version
+
   setup-cluster:
     runs-on: ubuntu-latest
     name: Setup Cluster (Ubuntu)
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: OpenShift Client Installer
-      uses: redhat-actions/oc-installer@v1
 
     - name: Log in to cluster
       run: oc login --token=${{ env.CLUSTER_TOKEN }} --server=${{ env.CLUSTER_URL }} --insecure-skip-tls-verify=true
@@ -28,6 +80,25 @@ jobs:
       run: |
         cd sigstore-ocp
         oc apply --kustomize=keycloak/operator/base
+
+    - name: Create and apply rhtas-candidate.yaml
+      run: |
+        cat <<EOF > rhtas-candidate.yaml
+        ---
+        apiVersion: operators.coreos.com/v1alpha1
+        kind: Subscription
+        metadata:
+          name: rhtas-operator
+          namespace: openshift-operators
+        spec:
+          channel: candidate-v1.0
+          installPlanApproval: Automatic
+          name: rhtas-operator
+          source: redhat-operators
+          sourceNamespace: openshift-marketplace
+        EOF
+
+        oc apply -f rhtas-candidate.yaml
 
     - name: Wait for Keycloak system pods to be running
       run: |
@@ -60,25 +131,6 @@ jobs:
             sleep 10
           fi
         done
-
-    - name: Create and apply rhtas-candidate.yaml
-      run: |
-        cat <<EOF > rhtas-candidate.yaml
-        ---
-        apiVersion: operators.coreos.com/v1alpha1
-        kind: Subscription
-        metadata:
-          name: rhtas-operator
-          namespace: openshift-operators
-        spec:
-          channel: candidate-v1.0
-          installPlanApproval: Automatic
-          name: rhtas-operator
-          source: redhat-operators
-          sourceNamespace: openshift-marketplace
-        EOF
-
-        oc apply -f rhtas-candidate.yaml
 
     - name: Wait for rhtas-operator to be ready
       run: |
@@ -156,7 +208,7 @@ jobs:
         done
 
   e2e-tests:
-    needs: setup-cluster
+    needs: [install-tools, setup-cluster]
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -166,51 +218,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Setup Go environment
-      uses: actions/setup-go@v5
-      with:
-        go-version: '>=1.22.0'
-
-    - name: Install Git (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git
-
-    - name: Install Git (macOS)
-      if: matrix.os == 'macos-latest'
-      run: brew install git
-
-    - name: Install Git (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        choco install git
-        echo "$env:ChocolateyInstall\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-    - name: Install skopeo (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install -y skopeo
-
-    - name: Install skopeo (macOS)
-      if: matrix.os == 'macos-latest'
-      run: brew install skopeo
-
-    - name: Install WSL and skopeo (Windows)
-      if: matrix.os == 'windows-latest'
-      uses: Vampire/setup-wsl@v3
-      with:
-        distribution: Ubuntu-22.04
-        update: 'true'
-
-    - name: Install skopeo in WSL (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        wsl sudo apt-get install -y skopeo
-        wsl skopeo --version
-
-    - name: OpenShift Client Installer
-      uses: redhat-actions/oc-installer@v1
 
     - name: Log in to cluster
       run: oc login --token=${{ env.CLUSTER_TOKEN }} --server=${{ env.CLUSTER_URL }} --insecure-skip-tls-verify=true
