@@ -42,7 +42,7 @@ jobs:
         bash ./scripts/wait-for-keycloak-url.sh
         echo "oidc_issuer_url=${{ env.OIDC_ISSUER_URL }}" >> $GITHUB_OUTPUT
     
-    - name: Wait for Keycloak URL and set OIDC Issuer URL
+    - name: Wait for RHTAS Operator
       run: bash ./scripts/wait-for-rhtas-operator.sh
 
     - name: Deploy SecureSign
