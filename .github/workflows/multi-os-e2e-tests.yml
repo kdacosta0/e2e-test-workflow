@@ -1,0 +1,123 @@
+name: Multi-OS E2E Tests
+
+on:
+  workflow_dispatch:
+
+env:
+  CLUSTER_URL: ${{ secrets.CLUSTER_URL }}
+  CLUSTER_USERNAME: ${{ secrets.CLUSTER_USERNAME }}
+  CLUSTER_PASSWORD: ${{ secrets.CLUSTER_PASSWORD }}
+  OPERATOR_SOURCE: ${{ secrets.OPERATOR_SOURCE || 'redhat-operators' }}
+
+jobs:
+  setup-cluster:
+    runs-on: ubuntu-latest
+    name: Setup Cluster (Ubuntu)
+    outputs:
+      oidc_issuer_url: ${{ steps.wait-for-keycloak-url.outputs.oidc_issuer_url }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: OpenShift Client Installer
+      uses: redhat-actions/oc-installer@v1
+
+    - name: Log in to cluster
+      run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
+
+    - name: Install sso and rhtas operators
+      run: |
+        git clone https://github.com/securesign/sigstore-ocp.git
+        oc apply --kustomize=sigstore-ocp/keycloak/operator/base
+        
+        envsubst < ./configs/rhtas-operator-subscription.yaml | oc apply -f -
+        
+        bash ./scripts/wait-for-keycloak-pods.sh
+
+        oc apply --kustomize=sigstore-ocp/keycloak/resources/base
+
+    - name: Wait for Keycloak URL and set OIDC Issuer URL
+      id: wait-for-keycloak-url
+      run: |
+        bash ./scripts/wait-for-keycloak-url.sh
+        echo "oidc_issuer_url=${{ env.OIDC_ISSUER_URL }}" >> $GITHUB_OUTPUT
+    
+    - name: Wait for Keycloak URL and set OIDC Issuer URL
+      run: bash ./scripts/wait-for-rhtas-operator.sh
+
+    - name: Deploy SecureSign
+      run: envsubst < ./configs/securesign-template.yaml | oc apply -f -
+
+    - name: Wait for Rekor readiness
+      run: bash ./scripts/wait-for-rekor.sh
+
+  prepare-windows:
+    runs-on: windows-latest
+    name: Prepare Windows Environment
+    steps:
+    - name: Install WSL
+      uses: Vampire/setup-wsl@v3
+      with:
+        distribution: Ubuntu-22.04
+
+    - name: Install skopeo in WSL
+      run: |
+        wsl sudo apt-get update
+        wsl sudo apt-get install -y skopeo
+        wsl skopeo --version
+
+  e2e-tests:
+    needs: [setup-cluster]
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    name: E2E Tests on ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Go environment
+      uses: actions/setup-go@v5
+      with:
+        go-version: '>=1.22.0'
+
+    - name: Install skopeo (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get install -y skopeo
+
+    - name: Install skopeo (macOS)
+      if: matrix.os == 'macos-latest'
+      run: brew install skopeo
+
+    - name: OpenShift Client Installer
+      uses: redhat-actions/oc-installer@v1
+
+    - name: Log in to cluster
+      run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
+
+    - name: Clone and prepare E2E tests
+      run: |
+        git clone https://github.com/securesign/sigstore-e2e.git
+        cd sigstore-e2e
+        git checkout skopeo-support
+
+    - name: Run E2E tests (Ubuntu/macOS)
+      if: matrix.os != 'windows-latest'
+      env:
+        CLI_STRATEGY: openshift
+      run: |
+        cd sigstore-e2e
+        source tas-env-variables.sh
+        go test -v ./test/... --ginkgo.v
+
+    - name: Run E2E tests (Windows)
+      if: matrix.os == 'windows-latest'
+      env:
+        CLI_STRATEGY: openshift
+      run: |
+        cd sigstore-e2e
+        .\tas-env-variables.ps1
+        go test -v ./test/... --ginkgo.v
