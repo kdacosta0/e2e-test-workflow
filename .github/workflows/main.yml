@@ -26,7 +26,6 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '>=1.22.0'
-  
 
     - name: Install Git (Ubuntu/RHEL)
       if: matrix.os == 'ubuntu-latest'
@@ -213,6 +212,7 @@ jobs:
             sleep 10  # Wait for 10 seconds before checking again
           fi
         done
+
 
     - name: Clone E2E repository
       run: git clone https://github.com/securesign/sigstore-e2e.git
