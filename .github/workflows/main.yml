@@ -56,9 +56,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            name: RHEL
       fail-fast: false
     runs-on: ${{ matrix.os }}
-    name: E2E Tests on ${{ matrix.os }}
+    name: E2E Tests on ${{ matrix.name || matrix.os }}
     
     steps:
     - name: Checkout code
@@ -69,7 +72,7 @@ jobs:
       with:
         go-version: '>=1.22.0'
 
-    - name: Install skopeo (Ubuntu)
+    - name: Install skopeo (Ubuntu/RHEL)
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install -y skopeo
 
@@ -98,7 +101,7 @@ jobs:
         cd sigstore-e2e
         git checkout skopeo-support
 
-    - name: Run E2E tests (Ubuntu/macOS)
+    - name: Run E2E tests (Ubuntu/RHEL/macOS)
       if: matrix.os != 'windows-latest'
       env:
         CLI_STRATEGY: openshift
