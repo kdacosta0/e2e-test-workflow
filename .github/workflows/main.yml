@@ -8,67 +8,15 @@ env:
   CLUSTER_TOKEN: ${{ secrets.CLUSTER_TOKEN }}
 
 jobs:
-  e2e-tests:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          - os: ubuntu-latest
-            name: RHEL
-    runs-on: ${{ matrix.os }}
-    name: E2E Tests on ${{ matrix.name || matrix.os }}
-    
+  setup-cluster:
+    runs-on: ubuntu-latest
+    name: Setup Cluster (Ubuntu)
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup Go environment
-      uses: actions/setup-go@v5
-      with:
-        go-version: '>=1.22.0'
-
-    - name: Install Git (Ubuntu/RHEL)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git
-
-    - name: Install Git (macOS)
-      if: matrix.os == 'macos-latest'
-      run: brew install git
-
-    - name: Install Git (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        choco install git
-        echo "$env:ChocolateyInstall\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-    - name: Install skopeo (Ubuntu/RHEL)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y skopeo
-
-    - name: Install skopeo (macOS)
-      if: matrix.os == 'macos-latest'
-      run: brew install skopeo
-
-    - name: Install WSL and skopeo (Windows)
-      if: matrix.os == 'windows-latest'
-      uses: Vampire/setup-wsl@v3
-      with:
-        distribution: Ubuntu-22.04
-        update: 'true'
-
-    - name: Install skopeo in WSL (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        wsl sudo apt-get install -y skopeo
-        wsl skopeo --version
-
     - name: OpenShift Client Installer
       uses: redhat-actions/oc-installer@v1
-            
 
     - name: Log in to cluster
       run: oc login --token=${{ env.CLUSTER_TOKEN }} --server=${{ env.CLUSTER_URL }} --insecure-skip-tls-verify=true
@@ -82,7 +30,6 @@ jobs:
         oc apply --kustomize=keycloak/operator/base
 
     - name: Wait for Keycloak system pods to be running
-      if: matrix.os != 'windows-latest'
       run: |
         for i in {1..30}; do
           if oc get pods -n keycloak-system | grep -E 'Running|Completed'; then
@@ -90,7 +37,7 @@ jobs:
             break
           else
             echo "Waiting for Keycloak system pods to be running..."
-            sleep 10  # Wait for 10 seconds before checking again
+            sleep 10
           fi
         done
 
@@ -100,7 +47,6 @@ jobs:
         oc apply --kustomize=keycloak/resources/base
 
     - name: Wait for Keycloak route to be available
-      if: matrix.os != 'windows-latest'
       run: |
         for i in {1..30}; do
           KEYCLOAK_URL=$(oc get route keycloak -n keycloak-system -o jsonpath='{.status.ingress[0].host}' 2>/dev/null || echo "")
@@ -111,12 +57,11 @@ jobs:
             break
           else
             echo "Waiting for Keycloak URL to be available..."
-            sleep 10  # Wait for 10 seconds before checking again
+            sleep 10
           fi
         done
 
     - name: Create and apply rhtas-candidate.yaml
-      if: matrix.os != 'windows-latest'
       run: |
         cat <<EOF > rhtas-candidate.yaml
         ---
@@ -136,7 +81,6 @@ jobs:
         oc apply -f rhtas-candidate.yaml
 
     - name: Wait for rhtas-operator to be ready
-      if: matrix.os != 'windows-latest'
       run: |
         for i in {1..30}; do
           if oc get csv -n openshift-operators | grep 'rhtas-operator' | grep 'Succeeded'; then
@@ -144,12 +88,11 @@ jobs:
             break
           else
             echo "Waiting for rhtas-operator to be ready..."
-            sleep 10  # Wait for 10 seconds before checking again
+            sleep 10
           fi
         done
 
     - name: Create and apply securesign.yaml
-      if: matrix.os != 'windows-latest'
       run: |
         cat <<EOF > securesign.yaml
         kind: Securesign
@@ -200,7 +143,6 @@ jobs:
         oc apply -f securesign.yaml
 
     - name: Wait for Rekor URL to be available
-      if: matrix.os != 'windows-latest'
       run: |
         for i in {1..30}; do
           REKOR_URL=$(oc get rekor -o jsonpath='{.items[0].status.url}' -n trusted-artifact-signer 2>/dev/null || echo "")
@@ -209,10 +151,69 @@ jobs:
             break
           else
             echo "Waiting for Rekor URL to be available..."
-            sleep 10  # Wait for 10 seconds before checking again
+            sleep 10
           fi
         done
 
+  e2e-tests:
+    needs: setup-cluster
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    name: E2E Tests on ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Go environment
+      uses: actions/setup-go@v5
+      with:
+        go-version: '>=1.22.0'
+
+    - name: Install Git (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git
+
+    - name: Install Git (macOS)
+      if: matrix.os == 'macos-latest'
+      run: brew install git
+
+    - name: Install Git (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install git
+        echo "$env:ChocolateyInstall\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Install skopeo (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get install -y skopeo
+
+    - name: Install skopeo (macOS)
+      if: matrix.os == 'macos-latest'
+      run: brew install skopeo
+
+    - name: Install WSL and skopeo (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: Vampire/setup-wsl@v3
+      with:
+        distribution: Ubuntu-22.04
+        update: 'true'
+
+    - name: Install skopeo in WSL (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        wsl sudo apt-get install -y skopeo
+        wsl skopeo --version
+
+    - name: OpenShift Client Installer
+      uses: redhat-actions/oc-installer@v1
+
+    - name: Log in to cluster
+      run: oc login --token=${{ env.CLUSTER_TOKEN }} --server=${{ env.CLUSTER_URL }} --insecure-skip-tls-verify=true
 
     - name: Clone E2E repository
       run: git clone https://github.com/securesign/sigstore-e2e.git
