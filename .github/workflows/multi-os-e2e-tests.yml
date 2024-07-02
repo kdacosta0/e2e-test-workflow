@@ -2,6 +2,8 @@ name: Multi-OS E2E Tests
 
 on:
   workflow_dispatch:
+    branches:
+      - file_structure
 
 env:
   CLUSTER_URL: ${{ secrets.CLUSTER_URL }}
