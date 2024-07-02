@@ -81,6 +81,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       uses: Vampire/setup-wsl@v3
       with:
+        use-cache: 'true'
         distribution: Ubuntu-22.04
         update: 'true'
         additional-packages: skopeo
