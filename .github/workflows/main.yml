@@ -54,6 +54,10 @@ jobs:
   copy-image-to-registry:
     runs-on: ubuntu-latest
     name: Copy Image to Registry (Ubuntu)
+    outputs:
+      ubuntu_image: ${{ steps.set-vars.outputs.ubuntu_image }}
+      windows_image: ${{ steps.set-vars.outputs.windows_image }}
+      macos_image: ${{ steps.set-vars.outputs.macos_image }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -64,6 +68,7 @@ jobs:
         sudo apt-get install -y skopeo
 
     - name: Use skopeo to copy images to registry
+      id: set-vars
       run: |
         export UBUNTU_IMAGE="ttl.sh/$(uuidgen):10m"
         export WINDOWS_IMAGE="ttl.sh/$(uuidgen):10m"
@@ -74,6 +79,8 @@ jobs:
         echo "UBUNTU_IMAGE=${UBUNTU_IMAGE}" >> $GITHUB_ENV
         echo "WINDOWS_IMAGE=${WINDOWS_IMAGE}" >> $GITHUB_ENV
         echo "MACOS_IMAGE=${MACOS_IMAGE}" >> $GITHUB_ENV
+  
+  
 
 
   e2e-tests:
@@ -86,6 +93,10 @@ jobs:
             name: RHEL
     runs-on: ${{ matrix.os }}
     name: E2E Tests on ${{ matrix.name || matrix.os }}
+    env:
+      UBUNTU_IMAGE: ${{ needs.copy-images-to-registry.outputs.ubuntu_image }}
+      WINDOWS_IMAGE: ${{ needs.copy-images-to-registry.outputs.windows_image }}
+      MACOS_IMAGE: ${{ needs.copy-images-to-registry.outputs.macos_image }}
     
     steps:
     - name: Checkout code
@@ -116,7 +127,6 @@ jobs:
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
-        echo "Using CLI_STRATEGY: $CLI_STRATEGY"
         echo "Using image: $TARGET_IMAGE_NAME"
         go test -v ./test/... --ginkgo.v
 
@@ -128,7 +138,6 @@ jobs:
       run: |
         cd sigstore-e2e
         .\tas-env-variables.ps1
-        echo "Using CLI_STRATEGY: $CLI_STRATEGY"
         echo "Using image: $TARGET_IMAGE_NAME"
         go test -v ./test/... --ginkgo.v
 
@@ -140,6 +149,5 @@ jobs:
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
-        echo "Using CLI_STRATEGY: $CLI_STRATEGY"
         echo "Using image: $TARGET_IMAGE_NAME"
         go test -v ./test/... --ginkgo.v
