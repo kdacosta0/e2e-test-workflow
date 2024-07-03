@@ -68,7 +68,7 @@ jobs:
     - name: Use skopeo to copy images to registry
       id: set-vars
       run: |
-        ./scripts/skopeo-copy.sh
+        bash ./scripts/skopeo-copy.sh
         echo "ubuntu_image=${{ env.UBUNTU_IMAGE }}" >> GITHUB_OUTPUT
 
   
