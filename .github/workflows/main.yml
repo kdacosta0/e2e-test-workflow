@@ -74,9 +74,9 @@ jobs:
         export WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m
         export MACOS_IMAGE=ttl.sh/$(uuidgen):10m
 
-        skopeo copy docker://quay.io/securesign/sigstore-ubuntu:latest docker://$UBUNTU_IMAGE
-        skopeo copy docker://quay.io/securesign/sigstore-ubuntu:latest docker://$WINDOWS_IMAGE
-        skopeo copy docker://quay.io/securesign/sigstore-ubuntu:latest docker://$MACOS_IMAGE
+        skopeo copy docker://docker.io/library/alpine:latest docker://$UBUNTU_IMAGE
+        skopeo copy docker://docker.io/library/alpine:latest docker://$WINDOWS_IMAGE
+        skopeo copy docker://docker.io/library/alpine:latest docker://$MACOS_IMAGE
 
         echo "ubuntu_image=${UBUNTU_IMAGE}" >> $GITHUB_ENV
         echo "windows_image=${WINDOWS_IMAGE}" >> $GITHUB_ENV
