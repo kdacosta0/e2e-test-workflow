@@ -67,15 +67,16 @@ jobs:
     - name: Set env variables
       id: set-env
       run: |
-        echo "ubuntu_image="ttl.sh/$(uuidgen):10m" >> GITHUB_ENV
-        echo "windows_image="ttl.sh/$(uuidgen):10m" >> GITHUB_ENV
-        echo "macos_image=ttl.sh/$(uuidgen):10m" >> GITHUB_ENV
+        echo "UBUNTU_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
+        echo "WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
+        echo "MACOS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
     
-    - name:
+    - name: Copy images to registry
       run: |
-        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.ubuntu_image }}
-        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.outputs.windows_image }}
-        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.outputs.macos_image }}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.UBUNTU_IMAGE }}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.WINDOWS_IMAGE }}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.MACOS_IMAGE }}
+
 
   e2e-tests:
     needs: [setup-cluster, copy-image-to-registry]
