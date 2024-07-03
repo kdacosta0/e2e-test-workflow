@@ -70,13 +70,13 @@ jobs:
     - name: Use skopeo to copy images to registry
       id: set-vars
       run: |
-        echo "UBUNTU_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
-        echo "WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
-        echo "MACOS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
+        export UBUNTU_IMAGE=ttl.sh/$(uuidgen):10m
+        export WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m
+        export MACOS_IMAGE=ttl.sh/$(uuidgen):10m
 
-        echo "ubuntu_image=${{ env.UBUNTU_IMAGE }}"
-        echo "windows_image=${{ env.WINDOWS_IMAGE }}"
-        echo "macos_image=${{ env.MACOS_IMAGE }}"
+        echo "ubuntu_image=${UBUNTU_IMAGE}"
+        echo "windows_image=${WINDOWS_IMAGE}"
+        echo "macos_image=${MACOS_IMAGE}"
 
   
   e2e-tests:
