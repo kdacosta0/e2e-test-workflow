@@ -55,6 +55,10 @@ jobs:
   copy-image-to-registry:
     runs-on: ubuntu-latest
     name: Copy Image to Registry (Ubuntu)
+    outputs:
+      ubuntu_image: ${{ steps.set-vars.outputs.ubuntu_image }}
+      windows_image: ${{ steps.set-vars.outputs.windows_image }}
+      macos_image: ${{ steps.set-vars.outputs.macos_image }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -76,6 +80,10 @@ jobs:
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.UBUNTU_IMAGE }}
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.WINDOWS_IMAGE }}
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.MACOS_IMAGE }}
+
+        echo "ubuntu_image::${{ env.UBUNTU_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "windows_image::${{ env.WINDOWS_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "macos_image=${{ env.MACOS_IMAGE }}" >> $GITHUB_OUTPUT
 
 
   e2e-tests:
