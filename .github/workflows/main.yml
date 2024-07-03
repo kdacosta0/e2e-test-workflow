@@ -79,7 +79,7 @@ jobs:
         echo "macos_image=${{ env.MACOS_IMAGE }}" >> GITHUB_OUTPUT
 
     - name: Use skopeo to copy images to registry
-      run: ./scripts/skopeo-copy.sh
+      run: bash ./scripts/skopeo-copy.sh
 
   
   e2e-tests:
