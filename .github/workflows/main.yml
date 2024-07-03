@@ -74,9 +74,13 @@ jobs:
         export WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m
         export MACOS_IMAGE=ttl.sh/$(uuidgen):10m
 
-        echo "ubuntu_image=${UBUNTU_IMAGE}"
-        echo "windows_image=${WINDOWS_IMAGE}"
-        echo "macos_image=${MACOS_IMAGE}"
+        skopeo copy docker://quay.io/securesign/sigstore-ubuntu:latest docker://$UBUNTU_IMAGE
+        skopeo copy docker://quay.io/securesign/sigstore-ubuntu:latest docker://$WINDOWS_IMAGE
+        skopeo copy docker://quay.io/securesign/sigstore-ubuntu:latest docker://$MACOS_IMAGE
+
+        echo "ubuntu_image=${UBUNTU_IMAGE}" >> $GITHUB_ENV
+        echo "windows_image=${WINDOWS_IMAGE}" >> $GITHUB_ENV
+        echo "macos_image=${MACOS_IMAGE}" >> $GITHUB_ENV
 
   
   e2e-tests:
@@ -115,7 +119,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ env.UBUNTU_IMAGE }}
+        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.ubuntu_image }}
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
@@ -126,7 +130,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ env.WINDOWS_IMAGE }}
+        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.windows_image }}
       run: |
         cd sigstore-e2e
         .\tas-env-variables.ps1
@@ -137,7 +141,7 @@ jobs:
       if: matrix.os == 'macos-latest'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ env.MACOS_IMAGE }}
+        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.macos_image }}
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
