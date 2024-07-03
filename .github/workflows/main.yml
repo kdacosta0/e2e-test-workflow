@@ -69,15 +69,14 @@ jobs:
         sudo apt-get install -y skopeo
 
     - name: Use skopeo to copy images and set env variables
-      env:
       run: |
         UBUNTU_IMAGE=ttl.sh/$(uuidgen):10m
         WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m
         MACOS_IMAGE=ttl.sh/$(uuidgen):10m
-        
-        skopeo copy docker://docker.io/library/alpine:latest docker://$UBUNTU_IMAGE
-        skopeo copy docker://docker.io/library/alpine:latest docker://$WINDOWS_IMAGE
-        skopeo copy docker://docker.io/library/alpine:latest docker://$MACOS_IMAGE
+
+        skopeo copy docker://docker.io/library/alpine:latest docker://${UBUNTU_IMAGE}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${WINDOWS_IMAGE}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${MACOS_IMAGE}
 
         echo "ubuntu_image=${UBUNTU_IMAGE}" >> $GITHUB_ENV
         echo "windows_image=${WINDOWS_IMAGE}" >> $GITHUB_ENV
