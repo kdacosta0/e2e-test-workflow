@@ -70,17 +70,22 @@ jobs:
 
     - name: Use skopeo to copy images and set env variables
       id: set-vars
-      
       run: |
         export UBUNTU_IMAGE="ttl.sh/$(uuidgen):10m"
         export WINDOWS_IMAGE="ttl.sh/$(uuidgen):10m"
         export MACOS_IMAGE="ttl.sh/$(uuidgen):10m"
 
-        envsubst '${UBUNTU_IMAGE} ${WINDOWS_IMAGE} ${MACOS_IMAGE}' < ./scripts/skopeo-copy.sh | bash
+        echo "ubuntu_image=${UBUNTU_IMAGE}"
+        echo "windows_image=${WINDOWS_IMAGE}"
+        echo "macos_image=${MACOS_IMAGE}"
 
         echo "ubuntu_image=${UBUNTU_IMAGE}" >> $GITHUB_OUTPUT
         echo "windows_image=${WINDOWS_IMAGE}" >> $GITHUB_OUTPUT
         echo "macos_image=${MACOS_IMAGE}" >> $GITHUB_OUTPUT
+
+    - name: Use skopeo to copy images and set env variables
+      run: envsubst < ./scripts/skopeo-copy.sh | bash 
+    
 
   e2e-tests:
     needs: [setup-cluster, copy-image-to-registry]
