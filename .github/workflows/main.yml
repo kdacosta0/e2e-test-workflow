@@ -116,6 +116,7 @@ jobs:
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
+        echo "Using CLI_STRATEGY: $CLI_STRATEGY"
         echo "Using image: $TARGET_IMAGE_NAME"
         go test -v ./test/... --ginkgo.v
 
@@ -127,6 +128,7 @@ jobs:
       run: |
         cd sigstore-e2e
         .\tas-env-variables.ps1
+        echo "Using CLI_STRATEGY: $CLI_STRATEGY"
         echo "Using image: $TARGET_IMAGE_NAME"
         go test -v ./test/... --ginkgo.v
 
@@ -138,5 +140,6 @@ jobs:
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
+        echo "Using CLI_STRATEGY: $CLI_STRATEGY"
         echo "Using image: $TARGET_IMAGE_NAME"
         go test -v ./test/... --ginkgo.v
