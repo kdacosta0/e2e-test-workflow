@@ -69,21 +69,21 @@ jobs:
         sudo apt-get install -y skopeo
 
     - name: Set env variables
-      id: set-env
       run: |
         echo "UBUNTU_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
         echo "WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
         echo "MACOS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
     
     - name: Copy images to registry
+      id: set-env
       run: |
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.UBUNTU_IMAGE }}
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.WINDOWS_IMAGE }}
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.MACOS_IMAGE }}
 
-        echo "::set-output name=ubuntu_image::${{ env.UBUNTU_IMAGE }}"
-        echo "::set-output name=windows_image::${{ env.WINDOWS_IMAGE }}"
-        echo "::set-output name=macos_image::${{ env.MACOS_IMAGE }}"
+        echo "ubuntu_image=${{ env.UBUNTU_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "Windows_image=${{ env.WINDOWS_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "macos_image=${{ env.MACOS_IMAGE }}" >> $GITHUB_OUTPUT
 
 
   e2e-tests:
