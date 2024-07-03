@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "skopeo copy docker://docker.io/library/alpine:latest docker://${UBUNTU_IMAGE}"
+echo "skopeo copy docker://docker.io/library/alpine:latest docker://${WINDOWS_IMAGE}"
+echo "skopeo copy docker://docker.io/library/alpine:latest docker://${MACOS_IMAGE}"
+
 # Copy images to registry using skopeo
 skopeo copy docker://docker.io/library/alpine:latest docker://${UBUNTU_IMAGE}
 skopeo copy docker://docker.io/library/alpine:latest docker://${WINDOWS_IMAGE}
