@@ -73,7 +73,7 @@ jobs:
 
     - name: Use skopeo to copy images to registry
       run: |
-        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.ubuntu_image }}
+        skopeo copy docker://docker.io/library/alpine:latest docker://$UBUNTU_IMAGE
   
   e2e-tests:
     needs: [setup-cluster, copy-image-to-registry]
