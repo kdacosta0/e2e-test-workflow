@@ -44,7 +44,6 @@ jobs:
     
     - name: Wait for RHTAS Operator
       run: |
-        echo "oidc_issuer_url=${{ env.OIDC_ISSUER_URL }}"
         bash ./scripts/wait-for-rhtas-operator.sh
 
     - name: Deploy SecureSign
@@ -58,6 +57,8 @@ jobs:
     name: Copy Image to Registry (Ubuntu)
     outputs:
       ubuntu_image: ${{ steps.set-vars.outputs.ubuntu_image }}
+      ubuntu_image: ${{ steps.set-vars.outputs.windows_image }}
+      ubuntu_image: ${{ steps.set-vars.outputs.macos_image }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -67,12 +68,18 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y skopeo
 
-    - name: Use skopeo to copy images to registry
+    - name: Set variables
       id: set-vars
       run: |
-        bash ./scripts/skopeo-copy.sh
-        echo "ubuntu_image=${{ env.UBUNTU_IMAGE }}"
+        export UBUNTU_IMAGE="ttl.sh/$(uuidgen):10m"
+        export WINDOWS_IMAGE="ttl.sh/$(uuidgen):10m"
+        export MACOS_IMAGE="ttl.sh/$(uuidgen):10m"
         echo "ubuntu_image=${{ env.UBUNTU_IMAGE }}" >> GITHUB_OUTPUT
+        echo "windows_image=${{ env.WINDOWS_IMAGE }}" >> GITHUB_OUTPUT
+        echo "macos_image=${{ env.MACOS_IMAGE }}" >> GITHUB_OUTPUT
+
+    - name: Use skopeo to copy images to registry
+      
 
   
   e2e-tests:
