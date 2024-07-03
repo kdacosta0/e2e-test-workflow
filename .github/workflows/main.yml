@@ -57,8 +57,8 @@ jobs:
     name: Copy Image to Registry (Ubuntu)
     outputs:
       ubuntu_image: ${{ steps.set-vars.outputs.ubuntu_image }}
-      ubuntu_image: ${{ steps.set-vars.outputs.windows_image }}
-      ubuntu_image: ${{ steps.set-vars.outputs.macos_image }}
+      windows_image: ${{ steps.set-vars.outputs.windows_image }}
+      macos_image: ${{ steps.set-vars.outputs.macos_image }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
