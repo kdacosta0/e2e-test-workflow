@@ -65,11 +65,16 @@ jobs:
 
     - name: Use skopeo to copy images to registry
       run: |
-        for os in ubuntu windows macos; do
-          export TARGET_IMAGE_NAME="ttl.sh/$(uuidgen):10m"
-          skopeo copy docker://docker.io/library/alpine:latest docker://$TARGET_IMAGE_NAME
-          echo "${os}_TARGET_IMAGE_NAME=${TARGET_IMAGE_NAME}" >> $GITHUB_ENV
-        done
+        export UBUNTU_IMAGE="ttl.sh/$(uuidgen):10m"
+        export WINDOWS_IMAGE="ttl.sh/$(uuidgen):10m"
+        export MACOS_IMAGE="ttl.sh/$(uuidgen):10m"
+        skopeo copy docker://docker.io/library/alpine:latest docker://$UBUNTU_IMAGE
+        skopeo copy docker://docker.io/library/alpine:latest docker://$WINDOWS_IMAGE
+        skopeo copy docker://docker.io/library/alpine:latest docker://$MACOS_IMAGE
+        echo "UBUNTU_IMAGE=${UBUNTU_IMAGE}" >> $GITHUB_ENV
+        echo "WINDOWS_IMAGE=${WINDOWS_IMAGE}" >> $GITHUB_ENV
+        echo "MACOS_IMAGE=${MACOS_IMAGE}" >> $GITHUB_ENV
+
 
   e2e-tests:
     needs: [setup-cluster, copy-image-to-registry]
@@ -107,7 +112,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ env.ubuntu_TARGET_IMAGE_NAME }}
+        TARGET_IMAGE_NAME: ${{ env.UBUNTU_IMAGE }}
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
@@ -118,7 +123,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ env.windows_TARGET_IMAGE_NAME }}
+        TARGET_IMAGE_NAME: ${{ env.WINDOWS_IMAGE }}
       run: |
         cd sigstore-e2e
         .\tas-env-variables.ps1
@@ -129,7 +134,7 @@ jobs:
       if: matrix.os == 'macos-latest'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ env.macos_TARGET_IMAGE_NAME }}
+        TARGET_IMAGE_NAME: ${{ env.MACOS_IMAGE }}
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
