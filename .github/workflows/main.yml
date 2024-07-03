@@ -76,7 +76,7 @@ jobs:
         export WINDOWS_IMAGE="ttl.sh/$(uuidgen):10m"
         export MACOS_IMAGE="ttl.sh/$(uuidgen):10m"
 
-        envsubst '${UBUNTU_IMAGE} ${WINDOWS_IMAGE} ${MACOS_IMAGE}' < ./scripts/skopeo-copy-template.sh | bash
+        envsubst '${UBUNTU_IMAGE} ${WINDOWS_IMAGE} ${MACOS_IMAGE}' < ./scripts/skopeo-copy.sh | bash
 
         echo "ubuntu_image=${UBUNTU_IMAGE}" >> $GITHUB_OUTPUT
         echo "windows_image=${WINDOWS_IMAGE}" >> $GITHUB_OUTPUT
