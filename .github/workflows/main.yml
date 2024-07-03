@@ -55,10 +55,6 @@ jobs:
   copy-image-to-registry:
     runs-on: ubuntu-latest
     name: Copy Image to Registry (Ubuntu)
-    outputs:
-      ubuntu_image: ${{ steps.set-env.outputs.ubuntu_image }}
-      windows_image: ${{ steps.set-env.outputs.windows_image }}
-      macos_image: ${{ steps.set-env.outputs.macos_image }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -71,15 +67,15 @@ jobs:
     - name: Set env variables
       id: set-env
       run: |
-        echo "ubuntu_image="ttl.sh/$(uuidgen):10m" >> GITHUB_OUTPUT
-        echo "windows_image="ttl.sh/$(uuidgen):10m" >> GITHUB_OUTPUT
-        echo "macos_image=ttl.sh/$(uuidgen):10m" >> GITHUB_OUTPUT
+        echo "ubuntu_image="ttl.sh/$(uuidgen):10m" >> GITHUB_ENV
+        echo "windows_image="ttl.sh/$(uuidgen):10m" >> GITHUB_ENV
+        echo "macos_image=ttl.sh/$(uuidgen):10m" >> GITHUB_ENV
     
     - name:
       run: |
-        skopeo copy docker://docker.io/library/alpine:latest docker://${{ steps.set-env.outputs.ubuntu_image }}
-        skopeo copy docker://docker.io/library/alpine:latest docker://${{ steps.set-env.outputs.windows_image }}
-        skopeo copy docker://docker.io/library/alpine:latest docker://${{ steps.set-env.outputs.macos_image }}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.ubuntu_image }}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.outputs.windows_image }}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.outputs.macos_image }}
 
   e2e-tests:
     needs: [setup-cluster, copy-image-to-registry]
