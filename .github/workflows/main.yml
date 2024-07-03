@@ -40,6 +40,7 @@ jobs:
       id: wait-for-keycloak-url
       run: |
         bash ./scripts/wait-for-keycloak-url.sh
+        echo "oidc_issuer_url=${{ env.OIDC_ISSUER_URL }}"
         echo "oidc_issuer_url=${{ env.OIDC_ISSUER_URL }}" >> $GITHUB_OUTPUT
     
     - name: Wait for RHTAS Operator
