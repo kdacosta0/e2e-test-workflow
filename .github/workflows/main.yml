@@ -74,6 +74,10 @@ jobs:
         export WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m
         export MACOS_IMAGE=ttl.sh/$(uuidgen):10m
 
+        echo "skopeo copy docker://docker.io/library/alpine:latest docker://$UBUNTU_IMAGE"
+        echo "skopeo copy docker://docker.io/library/alpine:latest docker://$WINDOWS_IMAGE"
+        echo "skopeo copy docker://docker.io/library/alpine:latest docker://$MACOS_IMAGE"
+
         skopeo copy docker://docker.io/library/alpine:latest docker://$UBUNTU_IMAGE
         skopeo copy docker://docker.io/library/alpine:latest docker://$WINDOWS_IMAGE
         skopeo copy docker://docker.io/library/alpine:latest docker://$MACOS_IMAGE
