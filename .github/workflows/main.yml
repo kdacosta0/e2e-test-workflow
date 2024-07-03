@@ -65,17 +65,15 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y skopeo
 
-    - name: Use skopeo to copy images to registry
+    - name: Set variables
       id: set-vars
       run: |
         export UBUNTU_IMAGE=ttl.sh/kdacosta-test-ubuntu:10m
-
-        echo "skopeo copy docker://docker.io/library/alpine:latest docker://$UBUNTU_IMAGE"
-
-        skopeo copy docker://docker.io/library/alpine:latest docker://$UBUNTU_IMAGE
-
         echo "ubuntu_image=${UBUNTU_IMAGE}" >> $GITHUB_ENV
 
+    - name: Use skopeo to copy images to registry
+      run: |
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.UBUNTU_IMAGE }}
   
   e2e-tests:
     needs: [setup-cluster, copy-image-to-registry]
