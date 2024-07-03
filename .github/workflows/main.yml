@@ -65,7 +65,7 @@ jobs:
 
     - name: Use skopeo to copy image to registry
       run: |
-        skopeo copy docker://docker.io/library/alpine:latest  docker://ttl.sh/kdacosta-e2e-test:1h
+        skopeo copy docker://docker.io/library/alpine:latest docker://ttl.sh/kdacosta-e2e-test:1h
 
   e2e-tests:
     needs: [setup-cluster, copy-image-to-registry]
