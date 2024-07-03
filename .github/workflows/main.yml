@@ -70,9 +70,9 @@ jobs:
 
     - name: Use skopeo to copy images and set env variables
       run: |
-        export UBUNTU_IMAGE="ttl.sh/$(uuidgen):10m"
-        export WINDOWS_IMAGE="ttl.sh/$(uuidgen):10m"
-        export MACOS_IMAGE="ttl.sh/$(uuidgen):10m"
+        UBUNTU_IMAGE="ttl.sh/$(uuidgen):10m"
+        WINDOWS_IMAGE="ttl.sh/$(uuidgen):10m"
+        MACOS_IMAGE="ttl.sh/$(uuidgen):10m"
 
         eval skopeo copy docker://docker.io/library/alpine:latest docker://$UBUNTU_IMAGE
         eval skopeo copy docker://docker.io/library/alpine:latest docker://$WINDOWS_IMAGE
