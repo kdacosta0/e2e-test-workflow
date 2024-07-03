@@ -69,6 +69,7 @@ jobs:
       id: set-vars
       run: |
         bash ./scripts/skopeo-copy.sh
+        echo "ubuntu_image=${{ env.UBUNTU_IMAGE }}"
         echo "ubuntu_image=${{ env.UBUNTU_IMAGE }}" >> GITHUB_OUTPUT
 
   
