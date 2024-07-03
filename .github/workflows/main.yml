@@ -56,9 +56,9 @@ jobs:
     runs-on: ubuntu-latest
     name: Copy Image to Registry (Ubuntu)
     outputs:
-      ubuntu_image: ${{ steps.set-vars.outputs.ubuntu_image }}
-      windows_image: ${{ steps.set-vars.outputs.windows_image }}
-      macos_image: ${{ steps.set-vars.outputs.macos_image }}
+      ubuntu_image: ${{ steps.set-env.outputs.ubuntu_image }}
+      windows_image: ${{ steps.set-env.outputs.windows_image }}
+      macos_image: ${{ steps.set-env.outputs.macos_image }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -69,23 +69,18 @@ jobs:
         sudo apt-get install -y skopeo
 
     - name: Use skopeo to copy images and set env variables
-      id: set-vars
       run: |
         export UBUNTU_IMAGE="ttl.sh/$(uuidgen):10m"
         export WINDOWS_IMAGE="ttl.sh/$(uuidgen):10m"
         export MACOS_IMAGE="ttl.sh/$(uuidgen):10m"
 
-        echo "ubuntu_image=${UBUNTU_IMAGE}"
-        echo "windows_image=${WINDOWS_IMAGE}"
-        echo "macos_image=${MACOS_IMAGE}"
+        skopeo copy docker://docker.io/library/alpine:latest docker://${UBUNTU_IMAGE}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${WINDOWS_IMAGE}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${MACOS_IMAGE}
 
-        echo "ubuntu_image=${UBUNTU_IMAGE}" >> $GITHUB_OUTPUT
-        echo "windows_image=${WINDOWS_IMAGE}" >> $GITHUB_OUTPUT
-        echo "macos_image=${MACOS_IMAGE}" >> $GITHUB_OUTPUT
-
-    - name: Use skopeo to copy images and set env variables
-      run: envsubst < ./scripts/skopeo-copy.sh | bash 
-    
+        echo "ubuntu_image=${UBUNTU_IMAGE}" >> $GITHUB_ENV
+        echo "windows_image=${WINDOWS_IMAGE}" >> $GITHUB_ENV
+        echo "macos_image=${MACOS_IMAGE}" >> $GITHUB_ENV
 
   e2e-tests:
     needs: [setup-cluster, copy-image-to-registry]
@@ -97,11 +92,7 @@ jobs:
             name: RHEL
     runs-on: ${{ matrix.os }}
     name: E2E Tests on ${{ matrix.name || matrix.os }}
-    env: 
-      UBUNTU_IMAGE: ${{ needs.copy-images-to-registry.outputs.ubuntu_image }}
-      WINDOWS_IMAGE: ${{ needs.copy-images-to-registry.outputs.windows_image }}
-      MACOS_IMAGE: ${{ needs.copy-images-to-registry.outputs.macos_image }}
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -127,7 +118,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ env.UBUNTU_IMAGE }}
+        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.ubuntu_image }}
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
@@ -138,7 +129,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ env.WINDOWS_IMAGE }}
+        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.windows_image }}
       run: |
         cd sigstore-e2e
         .\tas-env-variables.ps1
@@ -149,7 +140,7 @@ jobs:
       if: matrix.os == 'macos-latest'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ env.MACOS_IMAGE }}
+        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.macos_image }}
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
