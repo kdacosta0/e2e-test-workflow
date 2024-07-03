@@ -74,18 +74,10 @@ jobs:
         echo "WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
         echo "MACOS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
 
-        skopeo copy docker://docker.io/library/alpine:latest docker://$UBUNTU_IMAGE
-        skopeo copy docker://docker.io/library/alpine:latest docker://$WINDOWS_IMAGE
-        skopeo copy docker://docker.io/library/alpine:latest docker://$MACOS_IMAGE
+        echo "ubuntu_image=${{ env.UBUNTU_IMAGE }}"
+        echo "windows_image=${{ env.WINDOWS_IMAGE }}"
+        echo "macos_image=${{ env.MACOS_IMAGE }}"
 
-        echo "ubuntu_image=${UBUNTU_IMAGE}"
-        echo "windows_image=${WINDOWS_IMAGE}"
-        echo "macos_image=${MACOS_IMAGE}"
-
-        echo "ubuntu_image=${UBUNTU_IMAGE}" >> $GITHUB_ENV
-        echo "windows_image=${WINDOWS_IMAGE}" >> $GITHUB_ENV
-        echo "macos_image=${MACOS_IMAGE}" >> $GITHUB_ENV
-  
   
   e2e-tests:
     needs: [setup-cluster, copy-image-to-registry]
