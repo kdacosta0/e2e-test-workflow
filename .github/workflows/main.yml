@@ -63,9 +63,13 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y skopeo
 
-    - name: Use skopeo to copy image to registry
+    - name: Use skopeo to copy images to registry
       run: |
-        skopeo copy docker://docker.io/library/alpine:latest docker://ttl.sh/kdacosta-e2e-test:1h
+        for os in ubuntu windows macos; do
+          export TARGET_IMAGE_NAME="ttl.sh/$(uuidgen):10m"
+          skopeo copy docker://docker.io/library/alpine:latest docker://$TARGET_IMAGE_NAME
+          echo "${os}_TARGET_IMAGE_NAME=${TARGET_IMAGE_NAME}" >> $GITHUB_ENV
+        done
 
   e2e-tests:
     needs: [setup-cluster, copy-image-to-registry]
@@ -75,7 +79,6 @@ jobs:
         include:
           - os: ubuntu-latest
             name: RHEL
-      fail-fast: false
     runs-on: ${{ matrix.os }}
     name: E2E Tests on ${{ matrix.name || matrix.os }}
     
@@ -100,20 +103,35 @@ jobs:
         cd sigstore-e2e
         git checkout code_refactor
 
-    - name: Run E2E tests (Ubuntu/RHEL/macOS)
-      if: matrix.os != 'windows-latest'
+    - name: Run E2E tests (Ubuntu/RHEL)
+      if: matrix.os == 'ubuntu-latest'
       env:
         CLI_STRATEGY: openshift
+        TARGET_IMAGE_NAME: ${{ env.ubuntu_TARGET_IMAGE_NAME }}
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
+        echo "Using image: $TARGET_IMAGE_NAME"
         go test -v ./test/... --ginkgo.v
 
     - name: Run E2E tests (Windows)
       if: matrix.os == 'windows-latest'
       env:
         CLI_STRATEGY: openshift
+        TARGET_IMAGE_NAME: ${{ env.windows_TARGET_IMAGE_NAME }}
       run: |
         cd sigstore-e2e
         .\tas-env-variables.ps1
+        echo "Using image: $TARGET_IMAGE_NAME"
+        go test -v ./test/... --ginkgo.v
+
+    - name: Run E2E tests (macOS)
+      if: matrix.os == 'macos-latest'
+      env:
+        CLI_STRATEGY: openshift
+        TARGET_IMAGE_NAME: ${{ env.macos_TARGET_IMAGE_NAME }}
+      run: |
+        cd sigstore-e2e
+        source tas-env-variables.sh
+        echo "Using image: $TARGET_IMAGE_NAME"
         go test -v ./test/... --ginkgo.v
