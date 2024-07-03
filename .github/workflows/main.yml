@@ -98,7 +98,7 @@ jobs:
       run: |
         git clone https://github.com/securesign/sigstore-e2e.git
         cd sigstore-e2e
-        git checkout code-refactor
+        git checkout code_refactor
 
     - name: Run E2E tests (Ubuntu/RHEL/macOS)
       if: matrix.os != 'windows-latest'
