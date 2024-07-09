@@ -70,22 +70,7 @@ jobs:
 
     - name: Wait for and Approve InstallPlan
       run: |
-        echo "Waiting for InstallPlan to be created..."
-        for i in {1..30}; do
-          INSTALL_PLAN=$(oc get installplan -n openshift-operators -o json | jq -r '.items[] | select(.spec.clusterServiceVersionNames[0] | startswith("rhtas-operator.v")) | .metadata.name' | tail -n1)
-          if [ -n "$INSTALL_PLAN" ]; then
-            echo "InstallPlan found: $INSTALL_PLAN"
-            echo "Approving InstallPlan: $INSTALL_PLAN"
-            oc patch installplan $INSTALL_PLAN -n openshift-operators --type merge --patch '{"spec":{"approved":true}}'
-            break
-          fi
-          echo "Attempt $i: No suitable InstallPlan found yet. Waiting 10 seconds..."
-          sleep 10
-        done
-        if [ -z "$INSTALL_PLAN" ]; then
-          echo "No suitable InstallPlan found after 5 minutes. Exiting."
-          exit 1
-        fi
+        bash ./scripts/wait-and-approve-installplan.sh
 
     - name: Wait for Keycloak URL and set OIDC Issuer URL
       id: wait-for-keycloak-url
