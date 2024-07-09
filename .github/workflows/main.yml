@@ -2,12 +2,38 @@ name: Multi-OS E2E Tests
 
 on:
   workflow_dispatch:
+    inputs:
+      channel:
+        description: 'RHTAS Release channel'
+        required: true
+        type: choice
+        options:
+        - stable
+        - stable-v1.0
+        - candidate-v1.0
+      version:
+        description: 'RHTAS Version number'
+        required: true
+        type: choice
+        options:
+        - 1.0.0
+        - 1.0.1
+        - 1.0.2
+      source:
+        description: 'RHTAS Source'
+        required: true
+        type: choice
+        options:
+        - redhat-operators
+        - rhtas-operators
 
 env:
   CLUSTER_URL: ${{ secrets.CLUSTER_URL }}
   CLUSTER_USERNAME: ${{ secrets.CLUSTER_USERNAME }}
   CLUSTER_PASSWORD: ${{ secrets.CLUSTER_PASSWORD }}
-  OPERATOR_SOURCE: ${{ secrets.OPERATOR_SOURCE || 'redhat-operators' }}
+  OPERATOR_CHANNEL: ${{ github.event.inputs.channel }}
+  OPERATOR_VERSION: ${{ github.event.inputs.version }}
+  OPERATOR_SOURCE: ${{ github.event.inputs.source }}
 
 jobs:
   setup-cluster:
@@ -18,6 +44,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Print selected options
+      run: |
+        echo "Selected channel: ${{ env.OPERATOR_CHANNEL}}"
+        echo "Selected version: ${{ env.OPERATOR_VERSION }}"
+        echo "Selected source: ${{ env.OPERATOR_SOURCE }}"
 
     - name: OpenShift Client Installer
       uses: redhat-actions/oc-installer@v1
