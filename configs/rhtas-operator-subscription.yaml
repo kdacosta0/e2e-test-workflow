@@ -6,8 +6,8 @@ metadata:
   namespace: openshift-operators
 spec:
   channel: ${OPERATOR_CHANNEL}
-  version: ${OPERATOR_VERSION}
   installPlanApproval: Manual
   name: rhtas-operator
   source: ${OPERATOR_SOURCE}
   sourceNamespace: openshift-marketplace
+  startingCSV: rhtas-operator.v${OPERATOR_VERSION}
