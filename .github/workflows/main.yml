@@ -70,7 +70,7 @@ jobs:
 
     - name: Wait for and Approve InstallPlan
       run: |
-        bash ./scripts/wait-and-approve-installplan.sh
+        bash ./scripts/approve-installplan.sh
 
     - name: Wait for Keycloak URL and set OIDC Issuer URL
       id: wait-for-keycloak-url
@@ -78,10 +78,6 @@ jobs:
         bash ./scripts/wait-for-keycloak-url.sh
         echo "oidc_issuer_url=${{ env.OIDC_ISSUER_URL }}" >> $GITHUB_OUTPUT
     
-    - name: Wait for RHTAS Operator
-      run: |
-        bash ./scripts/wait-for-rhtas-operator.sh
-
     - name: Deploy SecureSign
       run: envsubst < ./configs/securesign-template.yaml | oc apply -f -
 
