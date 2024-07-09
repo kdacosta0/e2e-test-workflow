@@ -7,7 +7,7 @@ metadata:
 spec:
   channel: ${OPERATOR_CHANNEL}
   version: ${OPERATOR_VERSION}
-  installPlanApproval: Automatic
+  installPlanApproval: Manual
   name: rhtas-operator
   source: ${OPERATOR_SOURCE}
   sourceNamespace: openshift-marketplace
