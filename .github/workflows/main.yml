@@ -179,3 +179,10 @@ jobs:
         cd sigstore-e2e
         source tas-env-variables.sh
         go test -v ./test/... --ginkgo.v
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ matrix.os }}
+        path: sigstore-e2e/test-results
