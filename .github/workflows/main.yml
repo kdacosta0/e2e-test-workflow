@@ -186,6 +186,9 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: OpenShift Client Installer
       uses: redhat-actions/oc-installer@v1
 
