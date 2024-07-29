@@ -7,17 +7,25 @@ on:
         description: 'RHTAS Release channel'
         required: true
         type: choice
-        options: [stable, stable-v1.0, candidate-v1.0]
+        options:
+        - stable
+        - stable-v1.0
+        - candidate-v1.0
       version:
         description: 'RHTAS Version number'
         required: true
         type: choice
-        options: [1.0.0, 1.0.1, 1.0.2]
+        options:
+        - 1.0.0
+        - 1.0.1
+        - 1.0.2
       source:
         description: 'RHTAS Source'
         required: true
         type: choice
-        options: [redhat-operators, rhtas-operators]
+        options:
+        - redhat-operators
+        - rhtas-operators
 
 env:
   CLUSTER_URL: ${{ secrets.CLUSTER_URL }}
@@ -47,18 +55,20 @@ jobs:
       uses: redhat-actions/oc-installer@v1
 
     - name: Log in to cluster
-      run: |
-        oc login --server ${{ env.CLUSTER_URL }} --username ${{ env.CLUSTER_USERNAME }} --password ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
+      run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
 
-    - name: Install SSO and RHTAS operators
+    - name: Install sso and rhtas operators
       run: |
         git clone https://github.com/securesign/sigstore-ocp.git
         oc apply --kustomize=sigstore-ocp/keycloak/operator/base
+        
         envsubst < ./configs/rhtas-operator-subscription.yaml | oc apply -f -
+        
         bash ./scripts/wait-for-keycloak-pods.sh
+
         oc apply --kustomize=sigstore-ocp/keycloak/resources/base
 
-    - name: Approve InstallPlan
+    - name: Wait for and Approve InstallPlan
       run: |
         bash ./scripts/approve-installplan.sh
 
@@ -74,9 +84,9 @@ jobs:
     - name: Wait for Rekor readiness
       run: bash ./scripts/wait-for-rekor.sh
 
-  prepare-test-images:
+  copy-image-to-registry:
     runs-on: ubuntu-latest
-    name: Prepare Test Images (Ubuntu)
+    name: Copy Image to Registry (Ubuntu)
     outputs:
       ubuntu_image: ${{ steps.set-env.outputs.ubuntu_image }}
       windows_image: ${{ steps.set-env.outputs.windows_image }}
@@ -103,15 +113,19 @@ jobs:
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.WINDOWS_IMAGE }}
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.MACOS_IMAGE }}
 
+        echo "ubuntu_image=${{ env.UBUNTU_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "Windows_image=${{ env.WINDOWS_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "macos_image=${{ env.MACOS_IMAGE }}" >> $GITHUB_OUTPUT
+
+
   e2e-tests:
-    needs: [setup-cluster, prepare-test-images]
+    needs: [setup-cluster, copy-image-to-registry]
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
             name: RHEL
-      fail-fast: false
     runs-on: ${{ matrix.os }}
     name: E2E Tests on ${{ matrix.name || matrix.os }}
 
