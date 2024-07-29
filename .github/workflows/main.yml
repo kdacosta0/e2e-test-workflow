@@ -57,7 +57,7 @@ jobs:
     - name: Log in to cluster
       run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
 
-    - name: Install sso and rhtas operators
+    - name: Install SSO and RHTAS operators
       run: |
         git clone https://github.com/securesign/sigstore-ocp.git
         oc apply --kustomize=sigstore-ocp/keycloak/operator/base
@@ -84,9 +84,9 @@ jobs:
     - name: Wait for Rekor readiness
       run: bash ./scripts/wait-for-rekor.sh
 
-  copy-image-to-registry:
+  prepare-test-images:
     runs-on: ubuntu-latest
-    name: Copy Image to Registry (Ubuntu)
+    name: Prepare test images (Ubuntu)
     outputs:
       ubuntu_image: ${{ steps.set-env.outputs.ubuntu_image }}
       windows_image: ${{ steps.set-env.outputs.windows_image }}
@@ -119,7 +119,7 @@ jobs:
 
 
   e2e-tests:
-    needs: [setup-cluster, copy-image-to-registry]
+    needs: [setup-cluster, prepare-test-images]
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -164,6 +164,7 @@ jobs:
     - name: Run E2E tests
       env:
         CLI_STRATEGY: openshift
+        OIDC_ISSUER_URL: ${{ needs.setup-cluster.outputs.oidc_issuer_url }}
       run: |
         cd sigstore-e2e
         ${{ matrix.os == 'windows-latest' && '.\tas-env-variables.ps1' || 'source tas-env-variables.sh' }}
