@@ -27,20 +27,6 @@ else
     echo "No CSV found for RHTAS Operator"
 fi
 
-# Remove finalizers from CRDs
-echo "Removing finalizers from CRDs..."
-for crd in $(oc get crd | grep -E 'keycloak.org|rhtas.redhat.com' | awk '{print $1}'); do
-    echo "Removing finalizer from CRD: $crd"
-    oc patch crd $crd -p '{"metadata":{"finalizers":[]}}' --type=merge
-done
-
-# Delete any remaining Custom Resource Definitions (CRDs)
-echo "Deleting Custom Resource Definitions..."
-for crd in $(oc get crd | grep -E 'keycloak.org|rhtas.redhat.com' | awk '{print $1}'); do
-    echo "Deleting CRD: $crd"
-    oc delete crd $crd
-done
-
 # Clean up any remaining resources
 echo "Cleaning up remaining resources..."
 oc delete all -l app=rhsso -n keycloak-system

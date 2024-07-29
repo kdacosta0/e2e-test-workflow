@@ -181,6 +181,7 @@ jobs:
         go test -v ./test/... --ginkgo.v
 
   cleanup:
+    name: Cleanup cluster
     needs: [e2e-tests]
     runs-on: ubuntu-latest
     if: always()
