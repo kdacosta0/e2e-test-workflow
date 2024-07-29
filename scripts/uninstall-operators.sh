@@ -2,7 +2,7 @@
 
 # Delete the Subscriptions
 echo "Deleting Subscriptions..."
-oc delete subscription rhsso-operator -n keycloak-system
+oc delete namespace keycloak-system
 oc delete subscription rhtas-operator -n openshift-operators
 
 # Delete the OperatorGroup
