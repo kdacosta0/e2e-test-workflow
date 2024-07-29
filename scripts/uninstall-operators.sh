@@ -1,13 +1,35 @@
 #!/bin/bash
 
 # Delete the Subscriptions
-echo "Deleting Subscriptions..."
-oc delete namespace keycloak-system
-oc delete subscription rhtas-operator -n openshift-operators
+NAMESPACE="keycloak-system"
 
-# Delete the OperatorGroup
-echo "Deleting OperatorGroup..."
-oc delete operatorgroup keycloak-system-trusted-artifact-signer -n keycloak-system
+echo "Attempting to delete namespace $NAMESPACE..."
+oc delete namespace $NAMESPACE &
+
+# Function to check namespace status
+check_namespace() {
+    for i in {1..30}; do
+        if oc get namespace $NAMESPACE -o json 2>/dev/null | jq -r '.status.phase' | grep -q "Terminating"; then
+            echo "Namespace is still terminating. Removing finalizers..."
+            oc patch namespace $NAMESPACE -p '{"metadata":{"finalizers":[]}}' --type=merge
+            sleep 5
+        else
+            echo "Namespace $NAMESPACE has been deleted."
+            return 0
+        fi
+    done
+    echo "Namespace $NAMESPACE is still not deleted after multiple attempts. Manual intervention may be required."
+    return 1
+}
+
+# Run the check function in the background
+check_namespace &
+
+# Wait for all background jobs to finish
+wait
+
+echo "Deleting RHTAS Operator"
+oc delete subscription rhtas-operator -n openshift-operators
 
 # Delete the CSV (ClusterServiceVersion)
 echo "Deleting ClusterServiceVersions..."
