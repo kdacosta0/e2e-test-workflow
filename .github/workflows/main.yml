@@ -150,23 +150,32 @@ jobs:
         cd sigstore-e2e
         git checkout code_refactor
 
-    - name: Set TARGET_IMAGE_NAME
-      id: set-image
-      run: |
-        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-          echo "TARGET_IMAGE_NAME=${{ needs.prepare-test-images.outputs.ubuntu_image }}" >> $GITHUB_ENV
-        elif [ "${{ matrix.os }}" == "windows-latest" ]; then
-          echo "TARGET_IMAGE_NAME=${{ needs.prepare-test-images.outputs.windows_image }}" >> $GITHUB_ENV
-        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-          echo "TARGET_IMAGE_NAME=${{ needs.prepare-test-images.outputs.macos_image }}" >> $GITHUB_ENV
-        fi
-
-    - name: Run E2E tests
+    - name: Run E2E tests (Ubuntu/RHEL)
+      if: matrix.os == 'ubuntu-latest'
       env:
         CLI_STRATEGY: openshift
-        OIDC_ISSUER_URL: ${{ needs.setup-cluster.outputs.oidc_issuer_url }}
+        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.ubuntu_image }}
       run: |
         cd sigstore-e2e
-        ${{ matrix.os == 'windows-latest' && '.\tas-env-variables.ps1' || 'source tas-env-variables.sh' }}
-        echo "Using TARGET_IMAGE_NAME: $TARGET_IMAGE_NAME"
+        source tas-env-variables.sh
+        go test -v ./test/... --ginkgo.v
+
+    - name: Run E2E tests (Windows)
+      if: matrix.os == 'windows-latest'
+      env:
+        CLI_STRATEGY: openshift
+        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.windows_image }}
+      run: |
+        cd sigstore-e2e
+        .\tas-env-variables.ps1
+        go test -v ./test/... --ginkgo.v
+
+    - name: Run E2E tests (macOS)
+      if: matrix.os == 'macos-latest'
+      env:
+        CLI_STRATEGY: openshift
+        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.macos_image }}
+      run: |
+        cd sigstore-e2e
+        source tas-env-variables.sh
         go test -v ./test/... --ginkgo.v
