@@ -58,12 +58,12 @@ jobs:
         git clone https://github.com/securesign/sigstore-ocp.git
         oc apply --kustomize=sigstore-ocp/keycloak/operator/base
         envsubst < ./configs/rhtas-operator-subscription.yaml | oc apply -f -
-        ./scripts/wait-for-keycloak-pods.sh
+        bash ./scripts/wait-for-keycloak-pods.sh
         oc apply --kustomize=sigstore-ocp/keycloak/resources/base
 
     - name: Approve InstallPlan
       run: |
-        ./scripts/approve-installplan.sh
+        bash ./scripts/approve-installplan.sh
 
     - name: Wait for Keycloak URL and set OIDC Issuer URL
       id: wait-for-keycloak-url
