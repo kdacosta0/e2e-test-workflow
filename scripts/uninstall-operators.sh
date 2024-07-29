@@ -27,9 +27,4 @@ else
     echo "No CSV found for RHTAS Operator"
 fi
 
-# Clean up any remaining resources
-echo "Cleaning up remaining resources..."
-oc delete all -l app=rhsso -n keycloak-system
-oc delete all -l app=rhtas -n openshift-operators
-
 echo "Uninstallation process completed. Please verify that all resources have been removed."
