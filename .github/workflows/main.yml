@@ -111,7 +111,7 @@ jobs:
         include:
           - os: ubuntu-latest
             name: RHEL
-    fail-fast: false
+      fail-fast: false
     runs-on: ${{ matrix.os }}
     name: E2E Tests on ${{ matrix.name || matrix.os }}
 
