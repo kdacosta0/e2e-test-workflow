@@ -150,32 +150,12 @@ jobs:
         cd sigstore-e2e
         git checkout code_refactor
 
-    - name: Run E2E tests (Ubuntu/RHEL)
-      if: matrix.os == 'ubuntu-latest'
+    - name: Run E2E tests
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.ubuntu_image }}
+        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs[matrix.os == 'ubuntu-latest' && 'ubuntu_image' || matrix.os == 'windows-latest' && 'windows_image' || 'macos_image'] }}
+        OIDC_ISSUER_URL: ${{ needs.setup-cluster.outputs.oidc_issuer_url }}
       run: |
         cd sigstore-e2e
-        source tas-env-variables.sh
-        go test -v ./test/... --ginkgo.v
-
-    - name: Run E2E tests (Windows)
-      if: matrix.os == 'windows-latest'
-      env:
-        CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.windows_image }}
-      run: |
-        cd sigstore-e2e
-        .\tas-env-variables.ps1
-        go test -v ./test/... --ginkgo.v
-
-    - name: Run E2E tests (macOS)
-      if: matrix.os == 'macos-latest'
-      env:
-        CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.macos_image }}
-      run: |
-        cd sigstore-e2e
-        source tas-env-variables.sh
+        ${{ matrix.os == 'windows-latest' && '.\tas-env-variables.ps1' || 'source tas-env-variables.sh' }}
         go test -v ./test/... --ginkgo.v
