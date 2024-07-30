@@ -127,6 +127,7 @@ jobs:
           - os: ubuntu-latest
             name: RHEL
             container: registry.access.redhat.com/ubi9/ubi:latest
+      fail-fast: false
     runs-on: ${{ matrix.os != 'ubuntu-latest' && matrix.os || 'ubuntu-latest' }}
     container: ${{ matrix.container || '' }}
     name: E2E Tests on ${{ matrix.name || matrix.os }}
@@ -148,10 +149,9 @@ jobs:
 
     - name: Install Git
       if: matrix.name == 'RHEL'
-      run: |
-        yum install -y git
+      run: yum install -y git
         
-    - name: Clone and prepare E2E tests
+    - name: Clone and run E2E tests
       run: |
         git clone https://github.com/securesign/sigstore-e2e.git
         cd sigstore-e2e
@@ -163,7 +163,9 @@ jobs:
         CLI_STRATEGY: openshift
         TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.ubuntu_image }}
       run: |
+        git clone https://github.com/securesign/sigstore-e2e.git
         cd sigstore-e2e
+        git checkout code_refactor
         source tas-env-variables.sh
         go test -v ./test/... --ginkgo.v
 
