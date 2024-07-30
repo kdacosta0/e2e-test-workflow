@@ -67,7 +67,7 @@ jobs:
 
     - name: Wait for and Approve InstallPlan
       run: |
-        bash ./scripts/approve-installplan.sh
+        bash ./scripts/wait-for-approve-installplan.sh
 
     - name: Wait for Keycloak URL and set OIDC Issuer URL
       id: wait-for-keycloak-url
