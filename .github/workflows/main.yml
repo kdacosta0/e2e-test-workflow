@@ -128,7 +128,7 @@ jobs:
             name: RHEL
             container: registry.access.redhat.com/ubi9/ubi:latest
       fail-fast: false
-    runs-on: ${{ matrix.os != 'ubuntu-latest' && matrix.os || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.os }}
     container: ${{ matrix.container || '' }}
     name: E2E Tests on ${{ matrix.name || matrix.os }}
 
