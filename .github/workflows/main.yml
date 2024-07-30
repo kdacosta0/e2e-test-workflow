@@ -163,8 +163,8 @@ jobs:
         CLI_STRATEGY: openshift
         TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.ubuntu_image }}
       run: |
+        cat /etc/os-release
         cd sigstore-e2e
-        ls -a
         source ./tas-env-variables.sh
         go test -v ./test/... --ginkgo.v
 
