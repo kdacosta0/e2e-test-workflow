@@ -1,11 +1,6 @@
 #!/bin/bash
 
 # Delete the Subscriptions
-NAMESPACE="keycloak-system"
-
-echo "Attempting to delete namespace $NAMESPACE..."
-oc delete namespace $NAMESPACE
-
 echo "Deleting RHTAS Operator"
 oc delete subscription rhtas-operator -n openshift-operators
 
