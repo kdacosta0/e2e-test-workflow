@@ -163,7 +163,6 @@ jobs:
         CLI_STRATEGY: openshift
         TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.ubuntu_image }}
       run: |
-        git clone https://github.com/securesign/sigstore-e2e.git
         cd sigstore-e2e
         git checkout code_refactor
         source tas-env-variables.sh
