@@ -61,11 +61,8 @@ jobs:
       run: |
         git clone https://github.com/securesign/sigstore-ocp.git
         oc apply --kustomize=sigstore-ocp/keycloak/operator/base
-        
         envsubst < ./configs/rhtas-operator-subscription.yaml | oc apply -f -
-        
         bash ./scripts/wait-for-keycloak-pods.sh
-
         oc apply --kustomize=sigstore-ocp/keycloak/resources/base
 
     - name: Wait for and Approve InstallPlan
@@ -78,8 +75,10 @@ jobs:
         bash ./scripts/wait-for-keycloak-url.sh
         echo "oidc_issuer_url=${{ env.OIDC_ISSUER_URL }}" >> $GITHUB_OUTPUT
     
-    - name: Deploy SecureSign
-      run: envsubst < ./configs/securesign-template.yaml | oc apply -f -
+    - name: Wait for trusted-artifact-signer namespace and deploy SecureSign
+      run: |
+        bash ./scripts/wait-for-trusted-artifact-signer.sh
+        envsubst < ./configs/securesign-template.yaml | oc apply -f -
 
     - name: Wait for Rekor readiness
       run: bash ./scripts/wait-for-rekor.sh
