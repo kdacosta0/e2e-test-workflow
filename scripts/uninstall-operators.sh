@@ -2,6 +2,8 @@
 
 # Delete the Subscriptions
 echo "Deleting RHTAS Operator"
+oc delete namespace trusted-artifact-signer
+
 oc delete subscription rhtas-operator -n openshift-operators
 
 # Delete the CSV (ClusterServiceVersion)
