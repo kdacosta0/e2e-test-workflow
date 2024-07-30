@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Prepare test images (Ubuntu)
     outputs:
-      ubuntu_image: ${{ steps.set-env.outputs.ubuntu_image }}
+      rhel_image: ${{ steps.set-env.outputs.rhel_image }}
       windows_image: ${{ steps.set-env.outputs.windows_image }}
       macos_image: ${{ steps.set-env.outputs.macos_image }}
     steps:
@@ -102,18 +102,18 @@ jobs:
 
     - name: Set env variables
       run: |
-        echo "UBUNTU_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
+        echo "RHEL_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
         echo "WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
         echo "MACOS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
     
     - name: Copy images to registry
       id: set-env
       run: |
-        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.UBUNTU_IMAGE }}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.RHEL_IMAGE }}
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.WINDOWS_IMAGE }}
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.MACOS_IMAGE }}
 
-        echo "ubuntu_image=${{ env.UBUNTU_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "rhel_image=${{ env.RHEL_IMAGE }}" >> $GITHUB_OUTPUT
         echo "Windows_image=${{ env.WINDOWS_IMAGE }}" >> $GITHUB_OUTPUT
         echo "macos_image=${{ env.MACOS_IMAGE }}" >> $GITHUB_OUTPUT
 
@@ -161,7 +161,7 @@ jobs:
       if: matrix.name == 'RHEL'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.ubuntu_image }}
+        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.rhel_image }}
       run: |
         cat /etc/os-release
         cd sigstore-e2e
