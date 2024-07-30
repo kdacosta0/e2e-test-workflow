@@ -165,7 +165,7 @@ jobs:
       run: |
         cd sigstore-e2e
         ls -a
-        source tas-env-variables.sh
+        source ./tas-env-variables.sh
         go test -v ./test/... --ginkgo.v
 
     - name: Run E2E tests (Windows)
