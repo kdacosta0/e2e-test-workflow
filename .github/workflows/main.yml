@@ -127,6 +127,12 @@ jobs:
           - os: ubuntu-latest
             name: RHEL
             container: registry.access.redhat.com/ubi9/ubi:latest
+          
+          - os: windows-latest
+            name: Windows
+
+          - os: macos-latest
+            name: OSX
       fail-fast: false
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container || '' }}
@@ -190,7 +196,7 @@ jobs:
 
   
   cleanup:
-    name: Cleanup cluster
+    name: Cleanup cluster (Ubuntu)
     needs: [e2e-tests]
     runs-on: ubuntu-latest
     if: always()
