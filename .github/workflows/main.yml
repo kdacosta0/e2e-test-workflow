@@ -146,6 +146,11 @@ jobs:
     - name: Log in to cluster
       run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
 
+    - name: Install Git
+      if: matrix.name == 'RHEL'
+      run: |
+        sudo yum install -y git
+        
     - name: Clone and prepare E2E tests
       run: |
         git clone https://github.com/securesign/sigstore-e2e.git
