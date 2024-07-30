@@ -189,20 +189,20 @@ jobs:
         go test -v ./test/... --ginkgo.v
 
   
-# cleanup:
-#    name: Cleanup cluster
-#    needs: [e2e-tests]
-#    runs-on: ubuntu-latest
-#    if: always()
-#    steps:
-#    - name: Checkout code
-#      uses: actions/checkout@v4
+  cleanup:
+    name: Cleanup cluster
+    needs: [e2e-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-#    - name: OpenShift Client Installer
-#      uses: redhat-actions/oc-installer@v1
+    - name: OpenShift Client Installer
+      uses: redhat-actions/oc-installer@v1
 
-#    - name: Log in to cluster
-#      run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
+    - name: Log in to cluster
+      run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
 
-#    - name: Cleanup resources
-#      run: bash ./scripts/uninstall-operators.sh
+    - name: Cleanup resources
+      run: bash ./scripts/uninstall-operators.sh
