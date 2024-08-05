@@ -106,9 +106,9 @@ jobs:
 
     - name: Set env variables
       run: |
-        echo "RHEL_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
-        echo "WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
-        echo "MACOS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
+        echo "RHEL_IMAGE=ttl.sh/$(uuidgen):15m" >> $GITHUB_ENV
+        echo "WINDOWS_IMAGE=ttl.sh/$(uuidgen):15m" >> $GITHUB_ENV
+        echo "MACOS_IMAGE=ttl.sh/$(uuidgen):15m" >> $GITHUB_ENV
     
     - name: Copy images to registry
       id: set-env
