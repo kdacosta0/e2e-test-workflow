@@ -26,6 +26,11 @@ on:
         options:
         - redhat-operators
         - rhtas-operators
+      run_cleanup:
+        description: 'Run cleanup after tests'
+        required: true
+        type: boolean
+        default: true
 
 env:
   CLUSTER_URL: ${{ secrets.CLUSTER_URL }}
@@ -198,7 +203,7 @@ jobs:
     name: Cleanup cluster (Ubuntu)
     needs: [e2e-tests]
     runs-on: ubuntu-latest
-    if: always()
+    if: ${{ github.event.inputs.run_cleanup == 'true' }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
