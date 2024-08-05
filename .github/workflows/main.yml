@@ -25,7 +25,7 @@ on:
         type: choice
         options:
         - redhat-operators
-        - rhtas-operators
+        - rhtas-operator
       run_cleanup:
         description: 'Run cleanup after tests'
         required: true
