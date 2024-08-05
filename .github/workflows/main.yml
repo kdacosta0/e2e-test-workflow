@@ -154,7 +154,7 @@ jobs:
 
     - name: Install Git
       if: matrix.name == 'RHEL'
-      run: yum install -y git
+      run: dnf install -y git
         
     - name: Clone and run E2E tests
       run: |
