@@ -68,7 +68,6 @@ jobs:
         oc apply --kustomize=sigstore-ocp/keycloak/operator/base
         oc apply -f ./1.0.2/candidate/testingResources/ImageDigestMirrorSet.yaml
         oc apply -f ./1.0.2/candidate/testingResources/catalogSource_4_16.yaml
-        sleep 30
         envsubst < ./configs/rhtas-operator-subscription.yaml | oc apply -f -
         cat ./configs/rhtas-operator-subscription.yaml
         bash ./scripts/wait-for-keycloak-pods.sh
