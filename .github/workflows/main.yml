@@ -8,9 +8,9 @@ on:
         required: true
         type: choice
         options:
+        - candidate-v1.0
         - stable
         - stable-v1.0
-        - candidate-v1.0
       version:
         description: 'RHTAS Version number'
         required: true
@@ -24,8 +24,8 @@ on:
         required: true
         type: choice
         options:
-        - redhat-operators
         - rhtas-operator
+        - redhat-operators
       run_cleanup:
         description: 'Run cleanup after tests'
         required: true
@@ -62,19 +62,23 @@ jobs:
     - name: Log in to cluster
       run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
 
+    - name: Apply candidate resources
+      if: inputs.source == 'rhtas-operator'
+      run: |
+        oc apply -f ./1.0.2/candidate/testingResources/ImageDigestMirrorSet.yaml
+        oc apply -f ./1.0.2/candidate/testingResources/catalogSource_4_16.yaml
+
     - name: Install SSO and RHTAS operators
       run: |
         git clone https://github.com/securesign/sigstore-ocp.git
         oc apply --kustomize=sigstore-ocp/keycloak/operator/base
-        oc apply -f ./1.0.2/candidate/testingResources/ImageDigestMirrorSet.yaml
-        oc apply -f ./1.0.2/candidate/testingResources/catalogSource_4_16.yaml
         envsubst < ./configs/rhtas-operator-subscription.yaml | oc apply -f -
         bash ./scripts/wait-for-keycloak-pods.sh
         oc apply --kustomize=sigstore-ocp/keycloak/resources/base
 
-    - name: Wait for and Approve InstallPlan
+    - name: Approve InstallPlan
       run: |
-        bash ./scripts/wait-for-approve-installplan.sh
+        bash ./scripts/approve-installplan.sh
 
     - name: Wait for Keycloak URL and set OIDC Issuer URL
       id: wait-for-keycloak-url
