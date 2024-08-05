@@ -140,7 +140,7 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container || '' }}
-    name: E2E Tests on ${{ matrix.name || matrix.os }}
+    name: E2E Tests (${{ matrix.name || matrix.os }})
 
     steps:
     - name: Checkout code
