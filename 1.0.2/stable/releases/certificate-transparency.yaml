@@ -1,0 +1,9 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: certificate-transparency-go-1-0-2
+  namespace: rhtas-tenant
+spec:
+  releasePlan: certificate-transparency-go-1-0-2
+  snapshot: certificate-transparency-go-psxf7
+# Unchanged since the candidate release of 1.0.2

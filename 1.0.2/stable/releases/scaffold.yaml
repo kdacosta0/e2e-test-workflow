@@ -1,0 +1,9 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: scaffold-1-0-2
+  namespace: rhtas-tenant
+spec:
+  releasePlan: scaffold-1-0-2
+  snapshot: scaffold-6zmmr
+# Unchanged since the candidate release of 1.0.2

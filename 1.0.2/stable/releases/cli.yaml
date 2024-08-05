@@ -1,0 +1,9 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: cli-1-0-2
+  namespace: rhtas-tenant
+spec:
+  releasePlan: cli-1-0-2
+  snapshot: cli-mr6dn
+# Unchanged since the candidate release of 1.0.2
