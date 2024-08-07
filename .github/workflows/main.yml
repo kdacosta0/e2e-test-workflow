@@ -2,12 +2,43 @@ name: Multi-OS E2E Tests
 
 on:
   workflow_dispatch:
+    inputs:
+      channel:
+        description: 'RHTAS Release channel'
+        required: true
+        type: choice
+        options:
+        - candidate-v1.0
+        - stable
+        - stable-v1.0
+      version:
+        description: 'RHTAS Version number'
+        required: true
+        type: choice
+        options:
+        - 1.0.0
+        - 1.0.1
+        - 1.0.2
+      source:
+        description: 'RHTAS Source'
+        required: true
+        type: choice
+        options:
+        - rhtas-operator
+        - redhat-operators
+      run_cleanup:
+        description: 'Run cleanup after tests'
+        required: true
+        type: boolean
+        default: true
 
 env:
   CLUSTER_URL: ${{ secrets.CLUSTER_URL }}
   CLUSTER_USERNAME: ${{ secrets.CLUSTER_USERNAME }}
   CLUSTER_PASSWORD: ${{ secrets.CLUSTER_PASSWORD }}
-  OPERATOR_SOURCE: ${{ secrets.OPERATOR_SOURCE || 'redhat-operators' }}
+  OPERATOR_CHANNEL: ${{ github.event.inputs.channel }}
+  OPERATOR_VERSION: ${{ github.event.inputs.version }}
+  OPERATOR_SOURCE: ${{ github.event.inputs.source }}
 
 jobs:
   setup-cluster:
@@ -19,22 +50,37 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Print selected options
+      run: |
+        echo "Selected channel: ${{ env.OPERATOR_CHANNEL}}"
+        echo "Selected version: ${{ env.OPERATOR_VERSION }}"
+        echo "Selected source: ${{ env.OPERATOR_SOURCE }}"
+
     - name: OpenShift Client Installer
       uses: redhat-actions/oc-installer@v1
 
     - name: Log in to cluster
       run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
 
-    - name: Install sso and rhtas operators
+    - name: Apply candidate resources
+      if: inputs.source == 'rhtas-operator'
+      run: |
+        oc apply -f ./${{ env.OPERATOR_VERSION }}/candidate/testingResources/ImageDigestMirrorSet.yaml
+        oc apply -f ./${{ env.OPERATOR_VERSION }}/candidate/testingResources/catalogSource_4_16.yaml
+
+    - name: Install RHSSO and RHTAS operators
       run: |
         git clone https://github.com/securesign/sigstore-ocp.git
         oc apply --kustomize=sigstore-ocp/keycloak/operator/base
-        
         envsubst < ./configs/rhtas-operator-subscription.yaml | oc apply -f -
-        
-        bash ./scripts/wait-for-keycloak-pods.sh
 
+    - name: Wait for Keycloak pods and deploy Keycloak resources
+      run: |
+        bash ./scripts/wait-for-keycloak-pods.sh
         oc apply --kustomize=sigstore-ocp/keycloak/resources/base
+
+    - name: Approve InstallPlan
+      run: bash ./scripts/approve-installplan.sh
 
     - name: Wait for Keycloak URL and set OIDC Issuer URL
       id: wait-for-keycloak-url
@@ -42,21 +88,19 @@ jobs:
         bash ./scripts/wait-for-keycloak-url.sh
         echo "oidc_issuer_url=${{ env.OIDC_ISSUER_URL }}" >> $GITHUB_OUTPUT
     
-    - name: Wait for RHTAS Operator
+    - name: Wait for trusted-artifact-signer namespace and deploy SecureSign
       run: |
-        bash ./scripts/wait-for-rhtas-operator.sh
-
-    - name: Deploy SecureSign
-      run: envsubst < ./configs/securesign-template.yaml | oc apply -f -
+        bash ./scripts/wait-for-trusted-artifact-signer.sh
+        envsubst < ./configs/securesign-template.yaml | oc apply -f -
 
     - name: Wait for Rekor readiness
       run: bash ./scripts/wait-for-rekor.sh
 
-  copy-image-to-registry:
+  prepare-test-images:
     runs-on: ubuntu-latest
-    name: Copy Image to Registry (Ubuntu)
+    name: Prepare test images (Ubuntu)
     outputs:
-      ubuntu_image: ${{ steps.set-env.outputs.ubuntu_image }}
+      rhel_image: ${{ steps.set-env.outputs.rhel_image }}
       windows_image: ${{ steps.set-env.outputs.windows_image }}
       macos_image: ${{ steps.set-env.outputs.macos_image }}
     steps:
@@ -70,32 +114,41 @@ jobs:
 
     - name: Set env variables
       run: |
-        echo "UBUNTU_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
-        echo "WINDOWS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
-        echo "MACOS_IMAGE=ttl.sh/$(uuidgen):10m" >> $GITHUB_ENV
+        echo "RHEL_IMAGE=ttl.sh/$(uuidgen):15m" >> $GITHUB_ENV
+        echo "WINDOWS_IMAGE=ttl.sh/$(uuidgen):15m" >> $GITHUB_ENV
+        echo "MACOS_IMAGE=ttl.sh/$(uuidgen):15m" >> $GITHUB_ENV
     
     - name: Copy images to registry
       id: set-env
       run: |
-        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.UBUNTU_IMAGE }}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.RHEL_IMAGE }}
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.WINDOWS_IMAGE }}
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.MACOS_IMAGE }}
 
-        echo "ubuntu_image=${{ env.UBUNTU_IMAGE }}" >> $GITHUB_OUTPUT
-        echo "Windows_image=${{ env.WINDOWS_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "rhel_image=${{ env.RHEL_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "windows_image=${{ env.WINDOWS_IMAGE }}" >> $GITHUB_OUTPUT
         echo "macos_image=${{ env.MACOS_IMAGE }}" >> $GITHUB_OUTPUT
 
 
   e2e-tests:
-    needs: [setup-cluster, copy-image-to-registry]
+    needs: [setup-cluster, prepare-test-images]
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
             name: RHEL
+            container: registry.access.redhat.com/ubi9/ubi:latest
+          
+          - os: windows-latest
+            name: Windows
+
+          - os: macos-latest
+            name: OSX
+      fail-fast: false
     runs-on: ${{ matrix.os }}
-    name: E2E Tests on ${{ matrix.name || matrix.os }}
+    container: ${{ matrix.container || '' }}
+    name: E2E Tests (${{ matrix.name || matrix.os }})
 
     steps:
     - name: Checkout code
@@ -104,7 +157,7 @@ jobs:
     - name: Setup Go environment
       uses: actions/setup-go@v5
       with:
-        go-version: '>=1.22.0'
+        go-version: '1.22.5'
 
     - name: OpenShift Client Installer
       uses: redhat-actions/oc-installer@v1
@@ -112,41 +165,62 @@ jobs:
     - name: Log in to cluster
       run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
 
-    - name: Clone and prepare E2E tests
+    - name: Install Git
+      if: matrix.name == 'RHEL'
+      run: dnf install -y git
+        
+    - name: Clone and run E2E tests
       run: |
         git clone https://github.com/securesign/sigstore-e2e.git
         cd sigstore-e2e
         git checkout code_refactor
 
     - name: Run E2E tests (Ubuntu/RHEL)
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.name == 'RHEL'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.ubuntu_image }}
+        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.rhel_image }}
       run: |
+        cat /etc/os-release
         cd sigstore-e2e
-        source tas-env-variables.sh
-        echo "Using image: $TARGET_IMAGE_NAME"
+        source ./tas-env-variables.sh
         go test -v ./test/... --ginkgo.v
 
     - name: Run E2E tests (Windows)
       if: matrix.os == 'windows-latest'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.windows_image }}
+        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.windows_image }}
       run: |
         cd sigstore-e2e
         .\tas-env-variables.ps1
-        echo "Using image: $TARGET_IMAGE_NAME"
         go test -v ./test/... --ginkgo.v
 
     - name: Run E2E tests (macOS)
       if: matrix.os == 'macos-latest'
       env:
         CLI_STRATEGY: openshift
-        TARGET_IMAGE_NAME: ${{ needs.copy-image-to-registry.outputs.macos_image }}
+        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.macos_image }}
       run: |
         cd sigstore-e2e
         source tas-env-variables.sh
-        echo "Using image: $TARGET_IMAGE_NAME"
         go test -v ./test/... --ginkgo.v
+
+  
+  cleanup:
+    name: Cleanup cluster (Ubuntu)
+    needs: [e2e-tests]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_cleanup == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: OpenShift Client Installer
+      uses: redhat-actions/oc-installer@v1
+
+    - name: Log in to cluster
+      run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
+
+    - name: Cleanup resources
+      run: bash ./scripts/uninstall-operators.sh

@@ -1,0 +1,9 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: fulcio-1-0-2
+  namespace: rhtas-tenant
+spec:
+  releasePlan: fulcio-1-0-2
+  snapshot: fulcio-zt9qn
+# Unchanged since the candidate release of 1.0.2

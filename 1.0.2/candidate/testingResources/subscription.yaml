@@ -5,9 +5,8 @@ metadata:
   name: rhtas-operator
   namespace: openshift-operators
 spec:
-  channel: ${OPERATOR_CHANNEL}
-  installPlanApproval: Manual
+  channel: stable
+  installPlanApproval: Automatic
   name: rhtas-operator
-  source: ${OPERATOR_SOURCE}
+  source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: rhtas-operator.v${OPERATOR_VERSION}

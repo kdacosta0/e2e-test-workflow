@@ -1,0 +1,9 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: trillian-1-0-2
+  namespace: rhtas-tenant
+spec:
+  releasePlan: trillian-1-0-2
+  snapshot: trillian-lwlch
+# Unchanged since the candidate release of 1.0.2

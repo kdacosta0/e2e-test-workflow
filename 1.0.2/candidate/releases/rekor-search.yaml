@@ -1,0 +1,8 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: rekor-search-1-0-2
+  namespace: rhtas-tenant
+spec:
+  releasePlan: rekor-search-1-0-2
+  snapshot: rekor-search-txshm
