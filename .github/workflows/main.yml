@@ -65,20 +65,22 @@ jobs:
     - name: Apply candidate resources
       if: inputs.source == 'rhtas-operator'
       run: |
-        oc apply -f ./1.0.2/candidate/testingResources/ImageDigestMirrorSet.yaml
-        oc apply -f ./1.0.2/candidate/testingResources/catalogSource_4_16.yaml
+        oc apply -f ./${{ env.OPERATOR_VERSION }}/candidate/testingResources/ImageDigestMirrorSet.yaml
+        oc apply -f ./${{ env.OPERATOR_VERSION }}/candidate/testingResources/catalogSource_4_16.yaml
 
-    - name: Install SSO and RHTAS operators
+    - name: Install RHSSO and RHTAS operators
       run: |
         git clone https://github.com/securesign/sigstore-ocp.git
         oc apply --kustomize=sigstore-ocp/keycloak/operator/base
         envsubst < ./configs/rhtas-operator-subscription.yaml | oc apply -f -
+
+    - name: Wait for Keycloak pods and deploy Keycloak resources
+      run: |
         bash ./scripts/wait-for-keycloak-pods.sh
         oc apply --kustomize=sigstore-ocp/keycloak/resources/base
 
     - name: Approve InstallPlan
-      run: |
-        bash ./scripts/approve-installplan.sh
+      run: bash ./scripts/approve-installplan.sh
 
     - name: Wait for Keycloak URL and set OIDC Issuer URL
       id: wait-for-keycloak-url
@@ -124,7 +126,7 @@ jobs:
         skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.MACOS_IMAGE }}
 
         echo "rhel_image=${{ env.RHEL_IMAGE }}" >> $GITHUB_OUTPUT
-        echo "Windows_image=${{ env.WINDOWS_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "windows_image=${{ env.WINDOWS_IMAGE }}" >> $GITHUB_OUTPUT
         echo "macos_image=${{ env.MACOS_IMAGE }}" >> $GITHUB_OUTPUT
 
 
