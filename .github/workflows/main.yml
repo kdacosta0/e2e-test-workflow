@@ -144,7 +144,7 @@ jobs:
             name: Windows
 
           - os: macos-latest
-            name: OSX
+            name: macOS
       fail-fast: false
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container || '' }}
@@ -196,7 +196,7 @@ jobs:
         .\tas-env-variables.ps1
         go test -v ./test/... --ginkgo.v
 
-    - name: Run E2E tests (OSX)
+    - name: Run E2E tests (macOS)
       if: matrix.os == 'macos-latest'
       env:
         CLI_STRATEGY: openshift
