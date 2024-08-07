@@ -16,9 +16,9 @@ on:
         required: true
         type: choice
         options:
-        - 1.0.0
-        - 1.0.1
         - 1.0.2
+        - 1.0.1
+        - 1.0.0
       source:
         description: 'RHTAS Source'
         required: true
@@ -137,18 +137,18 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            name: RHEL
+            name: Ubuntu
             container: registry.access.redhat.com/ubi9/ubi:latest
           
           - os: windows-latest
             name: Windows
 
           - os: macos-latest
-            name: OSX
+            name: macOS
       fail-fast: false
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container || '' }}
-    name: E2E Tests (${{ matrix.name || matrix.os }})
+    name: E2E Tests (${{ matrix.name }})
 
     steps:
     - name: Checkout code
@@ -166,7 +166,7 @@ jobs:
       run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
 
     - name: Install Git
-      if: matrix.name == 'RHEL'
+      if: matrix.os == 'ubuntu-latest'
       run: dnf install -y git
         
     - name: Clone and run E2E tests
@@ -175,8 +175,8 @@ jobs:
         cd sigstore-e2e
         git checkout code_refactor
 
-    - name: Run E2E tests (Ubuntu/RHEL)
-      if: matrix.name == 'RHEL'
+    - name: Run E2E tests (RHEL on Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
       env:
         CLI_STRATEGY: openshift
         TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.rhel_image }}
