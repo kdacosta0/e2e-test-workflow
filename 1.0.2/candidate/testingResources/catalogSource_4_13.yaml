@@ -1,0 +1,12 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: rhtas-operator
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  grpcPodConfig:
+    securityContextConfig: legacy
+  publisher: Red Hat
+  image: quay.io/redhat-user-workloads/rhtas-tenant/fbc-v4-13/fbc-v4-13@sha256:4bcdeb8d6fb5569841d1f0e088f32bdb16c2bb48fda75f4b796b5b28c800da3c
+  displayName: TAS Operator

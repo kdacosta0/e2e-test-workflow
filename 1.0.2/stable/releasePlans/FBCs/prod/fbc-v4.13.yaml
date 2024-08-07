@@ -1,0 +1,12 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: ReleasePlan
+metadata:
+  labels:
+    release.appstudio.openshift.io/auto-release: "false"
+    release.appstudio.openshift.io/releasePlanAdmission: fbc-prod-index
+    release.appstudio.openshift.io/standing-attribution: "true"
+  name: fbc-v4-13-prod-1-0-2-stable
+  namespace: rhtas-tenant
+spec:
+  application: fbc-v4-13
+  target: rhtap-releng-tenant

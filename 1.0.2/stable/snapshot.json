@@ -1,0 +1,70 @@
+{
+    "day": "2024-06-11",
+    "time": "14-47-42",
+    "certificate-transparency-go": {
+        "snapshot_name": "certificate-transparency-go-psxf7",
+        "ctlog-image": "quay.io/redhat-user-workloads/rhtas-tenant/certificate-transparency-go/certificate-transparency-go@sha256:0765d248fd1c4b4f8cbcbee23f35506c08c9eeb96a8b0e8ff1511319be6c0ae6"
+    },
+    "cli": {
+        "snapshot_name": "cli-mr6dn",
+        "client-server-re-image": "quay.io/redhat-user-workloads/rhtas-tenant/cli/client-server-re@sha256:83b9f9a5ea40473c8525a16d9965b1ed1eb2d8f7c2ec1d17ae38e5f10ac1652e",
+        "cosign-cli-image": "quay.io/redhat-user-workloads/rhtas-tenant/cli/cosign@sha256:75791f7ee9257e837d1e3db13415d858c397e803ffa4534c51ca19a2ba34b2ab",
+        "gitsign-cli-image": "quay.io/redhat-user-workloads/rhtas-tenant/cli/gitsign@sha256:5b14542b2e0288c9f3dffe8e70891510846573ffca5113291157c603983b2c4c",
+        "client-server-cg-image": "quay.io/redhat-user-workloads/rhtas-tenant/cli/client-server-cg@sha256:f0c8f5129c0f611332f7b34dfc5f0dc39c73ed8a985a0845d1fe6ce31d2ba020"
+    },
+    "fbc-v4-13": {
+        "snapshot_name": "fbc-v4-13-vdp7h",
+        "fbc-v4-13-image": "quay.io/securesign/fbc-v4-13@sha256:c3d4da2edba3284c97b8e9ffde3a31371b614f5a401a6df4ae32f9d630c1d22d"
+    },
+    "fbc-v4-14": {
+        "snapshot_name": "fbc-v4-14-s6xvs",
+        "fbc-v4-14-image": "quay.io/securesign/fbc-v4-14@sha256:84295235bc18495721eeff98bde0e2af3278375dd843fc305631cc6081be6e4a"
+    },
+    "fbc-v4-15": {
+        "snapshot_name": "fbc-v4-15-8zvww",
+        "fbc-v4-15-image": "quay.io/securesign/fbc-v4-15@sha256:5d9d9eb1f07b69a028cf41edd78a092f61a8aa3d7ef4b8bdaec35e3299e6025e"
+    },
+    "fbc-v4-16": {
+        "snapshot_name": "fbc-v4-16-65t8p",
+        "fbc-v4-16-image": "quay.io/securesign/fbc-v4-16@sha256:f1276755d57947af1d75aaff60bb634ecab5f22c04f0a5c36cf59de49a040872"
+    },
+    "fulcio": {
+        "snapshot_name": "fulcio-zt9qn",
+        "fulcio-server-image": "quay.io/redhat-user-workloads/rhtas-tenant/fulcio/fulcio-server@sha256:e16accb01b2ca6bf4ebd60c6ce7faab73b784828578ee74305a3a97ff9db1e26"
+    },
+    "operator-v1-0": {
+        "snapshot_name": "operator-v1-0-gg7g4",
+        "rhtas-operator-bundle-image": "quay.io/redhat-user-workloads/rhtas-tenant/operator/rhtas-operator-bundle@sha256:496b29b00a9831278eb3a8316bd5fb233ad73cb9a6217b1ff4a5f72a91b87414",
+        "rhtas-operator-image": "quay.io/redhat-user-workloads/rhtas-tenant/operator/rhtas-operator@sha256:e1a78636cd7cc8e7227b6b0a5ddfd93d002db0464b15e966e88337d38989ea5a"
+    },
+    "rekor": {
+        "snapshot_name": "rekor-mwhl7",
+        "backfill-redis-image": "quay.io/redhat-user-workloads/rhtas-tenant/rekor/backfill-redis@sha256:0ad1961d6dd1c8636f5f1bcb5ffdbea51ad29b88c6539df366305ef801c79877",
+        "rekor-cli-image": "quay.io/redhat-user-workloads/rhtas-tenant/rekor/rekor-cli@sha256:c0f25ceca5534dc597904293cf376bcbedefe0d90322fd7b136c913e3bc059a6",
+        "rekor-server-image": "quay.io/redhat-user-workloads/rhtas-tenant/rekor/rekor-server@sha256:d4ea970447f3b4c18c309d2f0090a5d02260dd5257a0d41f87fefc4f014a9526"
+    },
+    "rekor-search": {
+        "snapshot_name": "rekor-search-txshm",
+        "rekor-search-ui-image": "quay.io/redhat-user-workloads/rhtas-tenant/rekor-search/rekor-search@sha256:5eabf561c0549d81862e521ddc1f0ab91a3f2c9d99dcd83ab5a2cf648a95dd19"
+    },
+    "scaffold": {
+        "snapshot_name": "scaffold-6zmmr",
+        "tuf-image": "quay.io/redhat-user-workloads/rhtas-tenant/scaffold/tuf-server@sha256:6c26d2394b1d82995a6f3d3483d2c18befd6a4ae826af2cd25aac30dfabef1cc",
+        "createctconfig-image": "quay.io/redhat-user-workloads/rhtas-tenant/scaffold/createctconfig@sha256:ab315886a307925cb38da0937000a679d4a9c8706b10dac8487accf8067905e7",
+        "ctlog-managectroots-image": "quay.io/redhat-user-workloads/rhtas-tenant/scaffold/ctlog-managectroots@sha256:a46484f75e6dfa0c1a62e362ced91d5ac705d5b89cc55adcc5a00fa91ec6bb0e",
+        "fulcio-createcerts-image": "quay.io/redhat-user-workloads/rhtas-tenant/scaffold/fulcio-createcerts@sha256:1414e10b7310a8149a183d0603b7d590e2fa77aed3c2f6a6499770a6886047bd",
+        "trillian-createdb-image": "quay.io/redhat-user-workloads/rhtas-tenant/scaffold/trillian-createdb@sha256:5e6a7b6b109b1736a3a09c180ff4eb82d0ce4c2b6e9226151785725b4336894c",
+        "trillian-createtree-image": "quay.io/redhat-user-workloads/rhtas-tenant/scaffold/trillian-createtree@sha256:08d862c12290cc8ffdbcce3f5abb63068db1b786df856489282a6454e83fcec5"
+    },
+    "segment-backup-job": {
+        "snapshot_name": "segment-backup-job-6dp7l",
+        "segment-backup-job-image": "quay.io/redhat-user-workloads/rhtas-tenant/segment-backup-job/segment-backup-job@sha256:ea37c68775b14e7d590b6eeec3c9b59eba8e988860fc04d40775da3957d6d040"
+    },
+    "trillian": {
+        "snapshot_name": "trillian-lwlch",
+        "trillian-db-image": "quay.io/redhat-user-workloads/rhtas-tenant/trillian/database@sha256:58140d6b7fee762b148336b342a6745b1910ab758a701b2e8077b1fca2af1180",
+        "trillian-log-server-image": "quay.io/redhat-user-workloads/rhtas-tenant/trillian/logserver@sha256:1673f08529a94671f881edec6fd29b73f43c2115dc86b643f9dd79d7e36be38e",
+        "trillian-log-signer-image": "quay.io/redhat-user-workloads/rhtas-tenant/trillian/logsigner@sha256:758bfd5455d0ca96f5404229a73fdcd56686564fc4c315ca3468ebe8588dd9ca",
+        "rekor-redis-image": "quay.io/redhat-user-workloads/rhtas-tenant/trillian/redis@sha256:06382df99dfff9f002365a31eee0855f8032e351bc9583e42e489ab7623fe287"
+    }
+}
