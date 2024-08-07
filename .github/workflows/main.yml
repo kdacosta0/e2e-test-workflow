@@ -2,113 +2,228 @@ name: Multi-OS E2E Tests
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    inputs:
+      channel:
+        description: 'RHTAS Release channel'
+        required: true
+        type: choice
+        options:
+        - candidate-v1.0
+        - stable
+        - stable-v1.0
+      version:
+        description: 'RHTAS Version number'
+        required: true
+        type: choice
+        options:
+        - 1.0.2
+        - 1.0.1
+        - 1.0.0
+      source:
+        description: 'RHTAS Source'
+        required: true
+        type: choice
+        options:
+        - rhtas-operator
+        - redhat-operators
+      run_cleanup:
+        description: 'Run cleanup after tests'
+        required: true
+        type: boolean
+        default: true
 
 env:
   CLUSTER_URL: ${{ secrets.CLUSTER_URL }}
-  CLUSTER_TOKEN: ${{ secrets.CLUSTER_TOKEN }}
+  CLUSTER_USERNAME: ${{ secrets.CLUSTER_USERNAME }}
+  CLUSTER_PASSWORD: ${{ secrets.CLUSTER_PASSWORD }}
+  OPERATOR_CHANNEL: ${{ github.event.inputs.channel }}
+  OPERATOR_VERSION: ${{ github.event.inputs.version }}
+  OPERATOR_SOURCE: ${{ github.event.inputs.source }}
 
 jobs:
+  setup-cluster:
+    runs-on: ubuntu-latest
+    name: Setup Cluster (Ubuntu)
+    outputs:
+      oidc_issuer_url: ${{ steps.wait-for-keycloak-url.outputs.oidc_issuer_url }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Print selected options
+      run: |
+        echo "Selected channel: ${{ env.OPERATOR_CHANNEL}}"
+        echo "Selected version: ${{ env.OPERATOR_VERSION }}"
+        echo "Selected source: ${{ env.OPERATOR_SOURCE }}"
+
+    - name: OpenShift Client Installer
+      uses: redhat-actions/oc-installer@v1
+
+    - name: Log in to cluster
+      run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
+
+    - name: Apply candidate resources
+      if: inputs.source == 'rhtas-operator'
+      run: |
+        oc apply -f ./${{ env.OPERATOR_VERSION }}/candidate/testingResources/ImageDigestMirrorSet.yaml
+        oc apply -f ./${{ env.OPERATOR_VERSION }}/candidate/testingResources/catalogSource_4_16.yaml
+
+    - name: Install RHSSO and RHTAS operators
+      run: |
+        git clone https://github.com/securesign/sigstore-ocp.git
+        oc apply --kustomize=sigstore-ocp/keycloak/operator/base
+        envsubst < ./configs/rhtas-operator-subscription.yaml | oc apply -f -
+
+    - name: Wait for Keycloak pods and deploy Keycloak resources
+      run: |
+        bash ./scripts/wait-for-keycloak-pods.sh
+        oc apply --kustomize=sigstore-ocp/keycloak/resources/base
+
+    - name: Approve InstallPlan
+      run: bash ./scripts/approve-installplan.sh
+
+    - name: Wait for Keycloak URL and set OIDC Issuer URL
+      id: wait-for-keycloak-url
+      run: |
+        bash ./scripts/wait-for-keycloak-url.sh
+        echo "oidc_issuer_url=${{ env.OIDC_ISSUER_URL }}" >> $GITHUB_OUTPUT
+    
+    - name: Wait for trusted-artifact-signer namespace and deploy SecureSign
+      run: |
+        bash ./scripts/wait-for-trusted-artifact-signer.sh
+        envsubst < ./configs/securesign-template.yaml | oc apply -f -
+
+    - name: Wait for Rekor readiness
+      run: bash ./scripts/wait-for-rekor.sh
+
+  prepare-test-images:
+    runs-on: ubuntu-latest
+    name: Prepare test images (Ubuntu)
+    outputs:
+      rhel_image: ${{ steps.set-env.outputs.rhel_image }}
+      windows_image: ${{ steps.set-env.outputs.windows_image }}
+      macos_image: ${{ steps.set-env.outputs.macos_image }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install skopeo
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y skopeo
+
+    - name: Set env variables
+      run: |
+        echo "RHEL_IMAGE=ttl.sh/$(uuidgen):15m" >> $GITHUB_ENV
+        echo "WINDOWS_IMAGE=ttl.sh/$(uuidgen):15m" >> $GITHUB_ENV
+        echo "MACOS_IMAGE=ttl.sh/$(uuidgen):15m" >> $GITHUB_ENV
+    
+    - name: Copy images to registry
+      id: set-env
+      run: |
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.RHEL_IMAGE }}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.WINDOWS_IMAGE }}
+        skopeo copy docker://docker.io/library/alpine:latest docker://${{ env.MACOS_IMAGE }}
+
+        echo "rhel_image=${{ env.RHEL_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "windows_image=${{ env.WINDOWS_IMAGE }}" >> $GITHUB_OUTPUT
+        echo "macos_image=${{ env.MACOS_IMAGE }}" >> $GITHUB_OUTPUT
+
+
   e2e-tests:
+    needs: [setup-cluster, prepare-test-images]
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            name: RHEL
+            name: Ubuntu
+            container: registry.access.redhat.com/ubi9/ubi:latest
+          
+          - os: windows-latest
+            name: Windows
+
+          - os: macos-latest
+            name: macOS
+      fail-fast: false
     runs-on: ${{ matrix.os }}
-    name: E2E Tests on ${{ matrix.name || matrix.os }}
-    
+    container: ${{ matrix.container || '' }}
+    name: E2E Tests (${{ matrix.name }})
+
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
+    - name: Setup Go environment
+      uses: actions/setup-go@v5
       with:
-        go-version: '1.17'
+        go-version: '1.22.5'
 
-    - name: Install Git (Ubuntu/RHEL)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git
-
-    - name: Install Git (macOS)
-      if: matrix.os == 'macos-latest'
-      run: brew install git
-
-    - name: Install Git (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        choco install git
-        echo "$env:ChocolateyInstall\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-    - name: Install skopeo (Ubuntu/RHEL)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y skopeo
-
-    - name: Install skopeo (macOS)
-      if: matrix.os == 'macos-latest'
-      run: brew install skopeo
-
-    - name: Install WSL and skopeo (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        # Enable WSL
-        dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-        # Enable Virtual Machine Platform
-        dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-        # Download Ubuntu 20.04 LTS
-        Invoke-WebRequest -Uri https://aka.ms/wslubuntu2004 -OutFile Ubuntu.appx -UseBasicParsing
-        # Install Ubuntu
-        Add-AppxPackage .\Ubuntu.appx
-        # Initialize Ubuntu (this might take a while)
-        Ubuntu2004 install --root
-        # Update and install skopeo in WSL
-        wsl -u root apt-get update
-        wsl -u root apt-get install -y skopeo
-
-    - name: Install oc
+    - name: OpenShift Client Installer
       uses: redhat-actions/oc-installer@v1
-      with:
-        oc_version: '4.15'
-
-    # FORNOW: Display tool versions
-    - name: Display tool versions
-      run: |
-        go version
-        git --version
-        oc version
-        if [ "${{ matrix.os }}" != "windows-latest" ]; then
-        skopeo --version
-        else
-        wsl skopeo --version
-        fi
 
     - name: Log in to cluster
-      run: oc login --token=${{ env.CLUSTER_TOKEN }} --server=${{ env.CLUSTER_URL }}
+      run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
 
-    - name: Clone E2E repository
-      run: git clone https://github.com/securesign/sigstore-e2e.git
-
-    - name: Run E2E tests (Ubuntu/macOS)
-      if: matrix.os != 'windows-latest'
+    - name: Install Git
+      if: matrix.os == 'ubuntu-latest'
+      run: dnf install -y git
+        
+    - name: Clone and run E2E tests
       run: |
+        git clone https://github.com/securesign/sigstore-e2e.git
         cd sigstore-e2e
-        git checkout skopeo-support
-        export CLI_STRATEGY=openshift
+        git checkout code_refactor
+
+    - name: Run E2E tests (RHEL on Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      env:
+        CLI_STRATEGY: openshift
+        MANUAL_IMAGE_SETUP: true
+        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.rhel_image }}
+      run: |
+        cat /etc/os-release
+        cd sigstore-e2e
+        source ./tas-env-variables.sh
         go test -v ./test/... --ginkgo.v
 
     - name: Run E2E tests (Windows)
       if: matrix.os == 'windows-latest'
+      env:
+        CLI_STRATEGY: openshift
+        MANUAL_IMAGE_SETUP: true
+        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.windows_image }}
       run: |
         cd sigstore-e2e
-        git checkout skopeo-support
-        $env:CLI_STRATEGY = "openshift"
+        .\tas-env-variables.ps1
         go test -v ./test/... --ginkgo.v
+
+    - name: Run E2E tests (macOS)
+      if: matrix.os == 'macos-latest'
+      env:
+        CLI_STRATEGY: openshift
+        MANUAL_IMAGE_SETUP: true
+        TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.macos_image }}
+      run: |
+        cd sigstore-e2e
+        source tas-env-variables.sh
+        go test -v ./test/... --ginkgo.v
+
+  
+  cleanup:
+    name: Cleanup cluster (Ubuntu)
+    needs: [e2e-tests]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_cleanup == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: OpenShift Client Installer
+      uses: redhat-actions/oc-installer@v1
+
+    - name: Log in to cluster
+      run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
+
+    - name: Cleanup resources
+      run: bash ./scripts/uninstall-operators.sh
