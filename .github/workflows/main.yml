@@ -179,7 +179,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       env:
         CLI_STRATEGY: openshift
-        MANUAL_IMAGE_SETUP: false
+        MANUAL_IMAGE_SETUP: true
         TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.rhel_image }}
       run: |
         cat /etc/os-release
@@ -191,7 +191,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       env:
         CLI_STRATEGY: openshift
-        MANUAL_IMAGE_SETUP: false
+        MANUAL_IMAGE_SETUP: true
         TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.windows_image }}
       run: |
         cd sigstore-e2e
