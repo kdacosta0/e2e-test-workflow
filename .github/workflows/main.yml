@@ -173,7 +173,7 @@ jobs:
       run: |
         git clone https://github.com/securesign/sigstore-e2e.git
         cd sigstore-e2e
-        git checkout code_refactor
+        git checkout dev
 
     - name: Run E2E tests (RHEL on Ubuntu)
       if: matrix.os == 'ubuntu-latest'
