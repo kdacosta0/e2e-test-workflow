@@ -166,7 +166,7 @@ jobs:
       run: oc login --server ${{ env.CLUSTER_URL }} --username  ${{ env.CLUSTER_USERNAME }} --password  ${{ env.CLUSTER_PASSWORD }} --insecure-skip-tls-verify=true
 
     - name: Install Git
-      if: matrix.name == 'RHEL'
+      if: matrix.os == 'ubuntu-latest'
       run: dnf install -y git
         
     - name: Clone and run E2E tests
