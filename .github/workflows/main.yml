@@ -137,7 +137,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            name: RHEL
+            name: Ubuntu
             container: registry.access.redhat.com/ubi9/ubi:latest
           
           - os: windows-latest
@@ -148,7 +148,7 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container || '' }}
-    name: E2E Tests (${{ matrix.name || matrix.os }})
+    name: E2E Tests (${{ matrix.name }})
 
     steps:
     - name: Checkout code
@@ -175,8 +175,8 @@ jobs:
         cd sigstore-e2e
         git checkout code_refactor
 
-    - name: Run E2E tests (Ubuntu/RHEL)
-      if: matrix.name == 'RHEL'
+    - name: Run E2E tests (RHEL on Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
       env:
         CLI_STRATEGY: openshift
         TARGET_IMAGE_NAME: ${{ needs.prepare-test-images.outputs.rhel_image }}
@@ -196,7 +196,7 @@ jobs:
         .\tas-env-variables.ps1
         go test -v ./test/... --ginkgo.v
 
-    - name: Run E2E tests (macOS)
+    - name: Run E2E tests (OSX)
       if: matrix.os == 'macos-latest'
       env:
         CLI_STRATEGY: openshift
